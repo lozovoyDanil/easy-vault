@@ -10,10 +10,10 @@
 
 Посилання
 ---
-_Back-End_
-[Front-End][1]
-[Mobile][2]
-[IoT][3]
+* _Back-End_
+* [Front-End][1]
+* [Mobile][2]
+* [IoT][3]
 
 [1]: https://github.com/lozovoyDanil
 [2]: https://github.com/lozovoyDanil
