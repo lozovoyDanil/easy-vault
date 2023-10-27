@@ -27,6 +27,7 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 	headerParts := strings.Split(header, " ")
 	if len(headerParts) != 2 {
 		newErrorResponse(ctx, http.StatusUnauthorized, "wrong header type")
+		return
 	}
 
 	userId, err := h.services.Authorization.ParseToken(headerParts[1])
