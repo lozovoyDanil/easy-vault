@@ -14,6 +14,7 @@ func (h *Handler) signUp(ctx *gin.Context) {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	id, err := h.services.Authorization.CreateUser(user)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
@@ -32,14 +33,13 @@ type signInInput struct {
 
 func (h *Handler) signIn(ctx *gin.Context) {
 	var input signInInput
-
 	err := ctx.BindJSON(&input)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	token, err := h.services.Authorization.GenerateToken(input.Username, input.Password)
+	token, err := h.services.GenerateToken(input.Username, input.Password)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
