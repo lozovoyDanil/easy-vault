@@ -16,27 +16,25 @@ func NewHandler(services *service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	router.LoadHTMLGlob("./templates/*")
+	// router.LoadHTMLGlob("./templates/*")
 
 	auth := router.Group("/auth")
 	{
 		auth.POST("/sign-up", h.signUp)
 		auth.POST("/sign-in", h.signIn)
 	}
-	/*
-		api := router.Group("/api", h.userIdentity)
+
+	api := router.Group("/api", h.userIdentity)
+	{
+		spaces := api.Group("/spaces")
 		{
-			spaces := api.Group("/spaces")
-			{
-				groups := spaces.Group("/groups")
-				{
-					storages := groups.Group("/storages")
-					{
-						storages.GET("/")
-					}
-				}
-			}
+			spaces.GET("/", h.allSpaces)
+			spaces.GET("/:id", h.spaceById)
+			spaces.POST("/", h.createSpace)
+			spaces.PUT("/:id", h.updateSpace)
+			spaces.DELETE("/:id", h.deleteSpace)
 		}
-	*/
+	}
+
 	return router
 }
