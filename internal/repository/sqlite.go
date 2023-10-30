@@ -7,12 +7,13 @@ import (
 
 const (
 	userTable         = "User"
-	userUnitsTable    = "User_Unit"
+	userUnitsTable    = "User_Units"
 	unitTable         = "Unit"
-	unitInGroupTable  = "Unit_Group"
+	unitInGroupTable  = "Group_Units"
 	groupTable        = "Group"
-	groupInSpaceTable = "Group_Space"
+	groupInSpaceTable = "Space_Groups"
 	spaceTable        = "Space"
+	userSpacesTable   = "User_Spaces"
 )
 
 func NewSQLiteDB() (*sqlx.DB, error) {
