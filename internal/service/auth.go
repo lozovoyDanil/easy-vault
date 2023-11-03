@@ -23,7 +23,7 @@ type AuthService struct {
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	UserId int
+	UserId int `json:"user_id"`
 }
 
 func NewAuthService(repo repository.Authorization) *AuthService {
@@ -76,5 +76,5 @@ func (s *AuthService) generatePassHash(pass string) string {
 	hash := sha1.New()
 	hash.Write([]byte(pass))
 
-	return fmt.Sprint(hash.Sum([]byte(salt)))
+	return fmt.Sprintf("%x", hash.Sum([]byte(salt)))
 }
