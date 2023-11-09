@@ -33,6 +33,12 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			spaces.POST("/", h.createSpace)
 			spaces.PUT("/:id", h.updateSpace)
 			spaces.DELETE("/:id", h.deleteSpace)
+
+			groups := spaces.Group(":id/groups")
+			{
+				groups.GET("/", h.spaceGroups)
+				groups.GET("/:group_id", h.groupById)
+			}
 		}
 	}
 
