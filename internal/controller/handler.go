@@ -38,6 +38,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			{
 				groups.GET("/", h.spaceGroups)
 				groups.GET("/:group_id", h.groupById)
+				groups.POST("/", h.createGroup)
 			}
 		}
 	}
