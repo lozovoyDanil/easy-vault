@@ -22,6 +22,7 @@ type Unit interface {
 type Group interface {
 	SpaceGroups(userId, spaceId int) ([]model.StorageGroup, error)
 	GroupById(userId, spaceId, groupId int) (model.StorageGroup, error)
+	CreateGroup(userId, spaceId int, group model.StorageGroup) error
 }
 
 type Space interface {

@@ -28,7 +28,7 @@ type Space interface {
 type Group interface {
 	SpaceGroups(userId, spaceId int) ([]model.StorageGroup, error)
 	GroupById(userId, spaceId, groupId int) (model.StorageGroup, error)
-	// CreateGroup()
+	CreateGroup(userId, spaceId int, group model.StorageGroup) error
 	// UpdateGroup()
 	// DeleteGroup()
 }

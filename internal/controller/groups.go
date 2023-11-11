@@ -65,3 +65,34 @@ func (h *Handler) groupById(ctx *gin.Context) {
 		Data: []model.StorageGroup{group},
 	})
 }
+
+func (h *Handler) createGroup(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	spaceId, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
+		return
+	}
+
+	var group model.StorageGroup
+	err = ctx.BindJSON(&group)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "wrong input: group")
+		return
+	}
+
+	err = h.services.CreateGroup(id, spaceId, group)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, statusResp{
+		Status: "OK",
+	})
+}
