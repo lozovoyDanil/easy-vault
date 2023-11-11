@@ -115,5 +115,5 @@ func (r *SpaceSQLite) DeleteSpace(userId, spaceId int) error {
 	//! All the groups and units must be deleted too.
 	//TODO: Add calls to delete them, or implement them here.
 
-	return nil
+	return tx.Commit()
 }
