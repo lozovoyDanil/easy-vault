@@ -26,22 +26,45 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	api := router.Group("/api", h.userIdentity)
 	{
+
 		spaces := api.Group("/spaces")
 		{
 			spaces.GET("/", h.allSpaces)
 			spaces.GET("/:id", h.spaceById)
-			spaces.POST("/", h.createSpace)
-			spaces.PUT("/:id", h.updateSpace)
-			spaces.DELETE("/:id", h.deleteSpace)
-
 			groups := spaces.Group(":id/groups")
 			{
 				groups.GET("/", h.spaceGroups)
 				groups.GET("/:group_id", h.groupById)
-				groups.POST("/", h.createGroup)
 			}
 		}
-	}
 
+		manager := api.Group("/manager")
+		{
+			spaces := manager.Group("/spaces")
+			{
+				spaces.GET("/", h.userSpaces)
+				spaces.POST("/", h.createSpace)
+				spaces.PUT("/:id", h.updateSpace)
+				spaces.DELETE("/:id", h.deleteSpace)
+
+				groups := spaces.Group(":id/groups")
+				{
+					groups.POST("/", h.createGroup)
+					groups.PUT("/:group_id")
+					groups.DELETE("/:group_id")
+
+					units := groups.Group(":group_id/units")
+					{
+						units.GET("/")
+						units.GET("/:unit_id")
+						units.POST("/")
+						units.PUT("/")
+						units.DELETE("/:unit_id")
+					}
+				}
+			}
+		}
+		// user := api.Group("/user")
+	}
 	return router
 }
