@@ -13,7 +13,7 @@ type groupsResponse struct {
 }
 
 func (h *Handler) spaceGroups(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	_, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -25,7 +25,7 @@ func (h *Handler) spaceGroups(ctx *gin.Context) {
 		return
 	}
 
-	groups, err := h.services.SpaceGroups(id, spaceId)
+	groups, err := h.services.SpaceGroups(spaceId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -37,7 +37,7 @@ func (h *Handler) spaceGroups(ctx *gin.Context) {
 }
 
 func (h *Handler) groupById(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	_, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -55,7 +55,7 @@ func (h *Handler) groupById(ctx *gin.Context) {
 		return
 	}
 
-	group, err := h.services.GroupById(id, spaceId, groupId)
+	group, err := h.services.GroupById(spaceId, groupId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

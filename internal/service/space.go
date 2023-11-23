@@ -13,12 +13,16 @@ func NewSpaceService(repo repository.Space) *SpaceService {
 	return &SpaceService{repo: repo}
 }
 
+func (s *SpaceService) AllSpaces() ([]model.Space, error) {
+	return s.repo.AllSpaces()
+}
+
 func (s *SpaceService) UserSpaces(id int) ([]model.Space, error) {
 	return s.repo.UserSpaces(id)
 }
 
-func (s *SpaceService) SpaceById(userId, spaceId int) (model.Space, error) {
-	return s.repo.SpaceById(userId, spaceId)
+func (s *SpaceService) SpaceById(spaceId int) (model.Space, error) {
+	return s.repo.SpaceById(spaceId)
 }
 
 func (s *SpaceService) CreateSpace(userId int, space model.Space) (int, error) {

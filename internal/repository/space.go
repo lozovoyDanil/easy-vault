@@ -17,6 +17,15 @@ func NewSpaceSQLite(db *sqlx.DB) *SpaceSQLite {
 	return &SpaceSQLite{db: db}
 }
 
+func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {
+	var spaces []model.Space
+
+	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id", spaceTable, userSpacesTable)
+	err := r.db.Select(&spaces, query)
+
+	return spaces, err
+}
+
 func (r *SpaceSQLite) UserSpaces(id int) ([]model.Space, error) {
 	var spaces []model.Space
 
@@ -26,11 +35,11 @@ func (r *SpaceSQLite) UserSpaces(id int) ([]model.Space, error) {
 	return spaces, err
 }
 
-func (r *SpaceSQLite) SpaceById(userId, spaceId int) (model.Space, error) {
+func (r *SpaceSQLite) SpaceById(spaceId int) (model.Space, error) {
 	var space model.Space
 
-	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id WHERE us.user_id=$1 AND us.space_id=$2", spaceTable, userSpacesTable)
-	err := r.db.Get(&space, query, userId, spaceId)
+	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id WHERE us.space_id=$1", spaceTable, userSpacesTable)
+	err := r.db.Get(&space, query, spaceId)
 
 	return space, err
 }

@@ -20,14 +20,16 @@ type Unit interface {
 }
 
 type Group interface {
-	SpaceGroups(userId, spaceId int) ([]model.StorageGroup, error)
-	GroupById(userId, spaceId, groupId int) (model.StorageGroup, error)
+	SpaceGroups(spaceId int) ([]model.StorageGroup, error)
+	GroupById(spaceId, groupId int) (model.StorageGroup, error)
 	CreateGroup(userId, spaceId int, group model.StorageGroup) error
 }
 
 type Space interface {
+	AllSpaces() ([]model.Space, error)
+
 	UserSpaces(id int) ([]model.Space, error)
-	SpaceById(userId, spaceId int) (model.Space, error)
+	SpaceById(spaceId int) (model.Space, error)
 	CreateSpace(userId int, space model.Space) (int, error)
 	UpdateSpace(userId, spaceId int, input model.UpdateSpaceInput) error
 	DeleteSpace(userId, spaceId int) error

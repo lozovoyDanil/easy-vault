@@ -13,6 +13,23 @@ type spacesResp struct {
 }
 
 func (h *Handler) allSpaces(ctx *gin.Context) {
+	_, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+	}
+
+	spaces, err := h.services.AllSpaces()
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, spacesResp{
+		Data: spaces,
+	})
+}
+
+func (h *Handler) userSpaces(ctx *gin.Context) {
 	id, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
@@ -30,7 +47,7 @@ func (h *Handler) allSpaces(ctx *gin.Context) {
 }
 
 func (h *Handler) spaceById(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	_, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -42,7 +59,7 @@ func (h *Handler) spaceById(ctx *gin.Context) {
 		return
 	}
 
-	space, err := h.services.SpaceById(id, spaceId)
+	space, err := h.services.SpaceById(spaceId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -72,7 +89,7 @@ func (h *Handler) createSpace(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]any{
+	ctx.JSON(http.StatusOK, gin.H{
 		"id": spaceId,
 	})
 }
