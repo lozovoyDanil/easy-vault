@@ -91,7 +91,6 @@ func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceIn
 	_, err := r.db.Exec(query, args...)
 
 	return err
-
 }
 
 func (r *SpaceSQLite) DeleteSpace(userId, spaceId int) error {
