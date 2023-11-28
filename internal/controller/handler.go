@@ -24,13 +24,19 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	api := router.Group("/api", h.userIdentity)
+	api := router.Group("/api" /*, h.userIdentity*/)
 	{
+		profile := api.Group("/profile")
+		{
+			profile.GET("/", h.userInfo)
+			profile.POST("/", h.editUser)
+		}
 
 		spaces := api.Group("/spaces")
 		{
 			spaces.GET("/", h.allSpaces)
 			spaces.GET("/:id", h.spaceById)
+
 			groups := spaces.Group(":id/groups")
 			{
 				groups.GET("/", h.spaceGroups)
@@ -46,25 +52,41 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				spaces.POST("/", h.createSpace)
 				spaces.PUT("/:id", h.updateSpace)
 				spaces.DELETE("/:id", h.deleteSpace)
+			}
 
-				groups := spaces.Group(":id/groups")
-				{
-					groups.POST("/", h.createGroup)
-					groups.PUT("/:group_id")
-					groups.DELETE("/:group_id")
+			groups := spaces.Group("/groups")
+			{
+				groups.POST("/", h.createGroup)
+				// groups.PUT("/:group_id")
+				// groups.DELETE("/:group_id")
+			}
 
-					units := groups.Group(":group_id/units")
-					{
-						units.GET("/")
-						units.GET("/:unit_id")
-						units.POST("/")
-						units.PUT("/")
-						units.DELETE("/:unit_id")
-					}
-				}
+			units := groups.Group("/units")
+			{
+				units.GET("/", h.groupUnits)
+				// units.GET("/:unit_id")
+				// units.POST("/")
+				// units.PUT("/")
+				// units.DELETE("/:unit_id")
 			}
 		}
-		// user := api.Group("/user")
+
+		customer := api.Group("/customer")
+		{
+			reserv := customer.Group("/curr-reservations")
+			{
+				reserv.GET("/", h.reservedUnits)
+				// reserv.GET("/:unit_id")
+				// reserv.GET("/:unit_id/details")
+
+				// reserv.POST("/:unit_id/unlock")
+				// reserv.POST("/:unit_id/lock")
+			}
+
+			customer.POST("/reserve-unit/:unit_id", h.reserveUnit)
+			// customer.POST("/extend-reserv/:unit_id")
+			// customer.DELETE("/cancel-reserv/:unit_id")
+		}
 	}
 	return router
 }
