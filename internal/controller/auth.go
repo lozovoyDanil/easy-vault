@@ -49,3 +49,44 @@ func (h *Handler) signIn(ctx *gin.Context) {
 		"token": token,
 	})
 }
+
+func (h *Handler) userInfo(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	user, err := h.services.UserInfo(id)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (h *Handler) editUser(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	var user model.UpdateUserInput
+	err = ctx.BindJSON(&user)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.services.EditUser(id, user)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, statusResp{
+		Status: "OK",
+	})
+}

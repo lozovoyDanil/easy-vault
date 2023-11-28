@@ -78,3 +78,15 @@ func (s *AuthService) generatePassHash(pass string) string {
 
 	return fmt.Sprintf("%x", hash.Sum([]byte(salt)))
 }
+
+func (s *AuthService) UserInfo(userId int) (model.User, error) {
+	return s.repo.UserInfo(userId)
+}
+
+func (s *AuthService) EditUser(userId int, input model.UpdateUserInput) error {
+	input.Id = userId
+	hashedPass := s.generatePassHash(*input.Password)
+	input.Password = &hashedPass
+
+	return s.repo.EditUser(input)
+}

@@ -9,6 +9,9 @@ type Authorization interface {
 	CreateUser(user model.User) (int, error)
 	GenerateToken(username, password string) (string, error)
 	ParseToken(token string) (int, error)
+
+	UserInfo(userId int) (model.User, error)
+	EditUser(userId int, input model.UpdateUserInput) error
 }
 
 type Subscription interface {
