@@ -6,3 +6,7 @@ type StorageGroup struct {
 	Size      int    `json:"size"`
 	NumOfFree int    `json:"numOfFree" db:"numOfFree"`
 }
+
+type UpdateGroupInput struct {
+	Name *string `json:"name"`
+}
