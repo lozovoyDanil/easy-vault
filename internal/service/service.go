@@ -34,11 +34,16 @@ type Group interface {
 	SpaceGroups(spaceId int) ([]model.StorageGroup, error)
 	GroupById(spaceId, groupId int) (model.StorageGroup, error)
 	CreateGroup(userId, spaceId int, group model.StorageGroup) error
-	// UpdateGroup()
-	// DeleteGroup()
+	UpdateGroup(userId, groupId int, group model.UpdateGroupInput) error
+	DeleteGroup(userId, groupId int) error
 }
 
 type Unit interface {
+	GroupUnits(userId, groupId int) ([]model.StorageUnit, error)
+	UnitById(userId, unitId int) (model.StorageUnit, error)
+	CreateUnit(userId, groupId int, unit model.StorageUnit) (int, error)
+	UpdateUnit(userId, unitId int, unit model.UpdateUnitInput) error
+	DeleteUnit(userId, unitId int) error
 }
 
 type Service struct {
