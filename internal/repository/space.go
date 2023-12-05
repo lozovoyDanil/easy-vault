@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +14,22 @@ type SpaceSQLite struct {
 
 func NewSpaceSQLite(db *sqlx.DB) *SpaceSQLite {
 	return &SpaceSQLite{db: db}
+}
+
+func (r *SpaceSQLite) SpaceBelongsToUser(userId, spaceId int) error {
+	var count int
+
+	query := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM %s us
+		WHERE us,user_id=$1 AND us.spaceId=$2`,
+		userSpacesTable)
+	err := r.db.Get(&count, query, userId, spaceId)
+	if count == 0 {
+		return ErrOwnershipViolation
+	}
+
+	return err
 }
 
 func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {
@@ -93,6 +108,7 @@ func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceIn
 	return err
 }
 
+// TODO Изменить реализацию в связи с присутсвием касадного удаления
 func (r *SpaceSQLite) DeleteSpace(userId, spaceId int) error {
 	//* Starting transaction
 	tx, err := r.db.Begin()
@@ -100,28 +116,25 @@ func (r *SpaceSQLite) DeleteSpace(userId, spaceId int) error {
 		return err
 	}
 
+	//Deleting a row from the table that connects Users to their spaces.
 	query := fmt.Sprintf("DELETE FROM %s WHERE space_id=$1 AND user_id=$2", userSpacesTable)
 	res, err := tx.Exec(query, spaceId, userId)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	// If res.RowsAffected() returns 0, this means that eather
+	// If res.RowsAffected() returns 0, this means that either
 	// space does not exist or user does not own it.
-	if r, _ := res.RowsAffected(); r == 0 {
-		tx.Rollback()
-		return errors.New("access forbiden or object does not exist")
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrOwnershipViolation
 	}
-
-	query = fmt.Sprintf("DELETE FROM %s WHERE id = ?", spaceTable)
+	//Actualy deleting space.
+	query = fmt.Sprintf("DELETE FROM %s WHERE id=$1", spaceTable)
 	_, err = tx.Exec(query, spaceId)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-
-	//! All the groups and units must be deleted too.
-	//TODO: Add calls to delete them, or implement them here.
 
 	return tx.Commit()
 }
