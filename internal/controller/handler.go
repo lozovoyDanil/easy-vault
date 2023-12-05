@@ -24,7 +24,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	api := router.Group("/api" /*, h.userIdentity*/)
+	api := router.Group("/api", h.userIdentity)
 	{
 		profile := api.Group("/profile")
 		{
@@ -50,24 +50,24 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			{
 				spaces.GET("/", h.userSpaces)
 				spaces.POST("/", h.createSpace)
-				spaces.PUT("/:id", h.updateSpace)
-				spaces.DELETE("/:id", h.deleteSpace)
+				spaces.PUT("/:space_id", h.updateSpace)
+				spaces.DELETE("/:space_id", h.deleteSpace)
 			}
 
-			groups := spaces.Group("/groups")
+			groups := manager.Group("/groups")
 			{
 				groups.POST("/", h.createGroup)
-				// groups.PUT("/:group_id")
-				// groups.DELETE("/:group_id")
+				groups.PUT("/:group_id", h.updateGroup)
+				groups.DELETE("/:group_id", h.deleteGroup)
 			}
 
-			units := groups.Group("/units")
+			units := manager.Group("/units")
 			{
 				units.GET("/", h.groupUnits)
-				// units.GET("/:unit_id")
-				// units.POST("/")
-				// units.PUT("/")
-				// units.DELETE("/:unit_id")
+				units.GET("/:unit_id", h.unitById)
+				units.POST("/", h.createUnit)
+				units.PUT("/", h.updateUnit)
+				units.DELETE("/:unit_id", h.deleteUnit)
 			}
 		}
 
