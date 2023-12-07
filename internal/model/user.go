@@ -5,7 +5,12 @@ type User struct {
 	FullName string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Role     string
+	Role     string `db:"role"`
+}
+
+type UserIdentity struct {
+	Id   int    `db:"id"`
+	Role string `db:"role"`
 }
 
 type UpdateUserInput struct {
