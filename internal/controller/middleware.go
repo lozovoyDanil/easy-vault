@@ -10,11 +10,15 @@ import (
 
 const (
 	authHeader = "Authorization"
+
+	magaerRole   = "manager"
+	customerRole = "customer"
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrWrongIdType  = errors.New("wrong user id type")
+	ErrUserNotFound  = errors.New("user not found")
+	ErrWrongIdType   = errors.New("wrong user id type")
+	ErrWrongRoleType = errors.New("wrong user role type")
 )
 
 func (h *Handler) userIdentity(ctx *gin.Context) {
@@ -30,13 +34,40 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 		return
 	}
 
-	userId, err := h.services.Authorization.ParseToken(headerParts[1])
+	user, err := h.services.Authorization.ParseToken(headerParts[1])
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	ctx.Set("userId", userId)
+	ctx.Set("userId", user.Id)
+	ctx.Set("userRole", user.Role)
+}
+
+func (h *Handler) managerAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != magaerRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not manager")
+		return
+	}
+}
+
+func (h *Handler) customerAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != customerRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not customer")
+		return
+	}
 }
 
 func getUserId(ctx *gin.Context) (int, error) {
@@ -53,4 +84,20 @@ func getUserId(ctx *gin.Context) (int, error) {
 	}
 
 	return idInt, nil
+}
+
+func getUserRole(ctx *gin.Context) (string, error) {
+	role, ok := ctx.Get("userRole")
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "user not found")
+		return "", ErrUserNotFound
+	}
+
+	roleStr, ok := role.(string)
+	if !ok {
+		newErrorResponse(ctx, http.StatusInternalServerError, "wrong user role type")
+		return "", ErrWrongRoleType
+	}
+
+	return roleStr, nil
 }

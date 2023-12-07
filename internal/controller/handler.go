@@ -24,7 +24,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		auth.POST("/sign-in", h.signIn)
 	}
 
-	api := router.Group("/api", h.userIdentity)
+	api := router.Group("/api")
+	api.Use(h.userIdentity)
 	{
 		profile := api.Group("/profile")
 		{
@@ -45,6 +46,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		}
 
 		manager := api.Group("/manager")
+		manager.Use(h.managerAccess)
 		{
 			spaces := manager.Group("/spaces")
 			{
@@ -66,17 +68,18 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				units.GET("/", h.groupUnits)
 				units.GET("/:unit_id", h.unitById)
 				units.POST("/", h.createUnit)
-				units.PUT("/", h.updateUnit)
+				units.PUT("/:unit_id", h.updateUnit)
 				units.DELETE("/:unit_id", h.deleteUnit)
 			}
 		}
 
 		customer := api.Group("/customer")
+		customer.Use(h.customerAccess)
 		{
 			reserv := customer.Group("/curr-reservations")
 			{
 				reserv.GET("/", h.reservedUnits)
-				// reserv.GET("/:unit_id")
+				reserv.GET("/:unit_id", h.unitById)
 				// reserv.GET("/:unit_id/details")
 
 				// reserv.POST("/:unit_id/unlock")
@@ -88,5 +91,6 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			// customer.DELETE("/cancel-reserv/:unit_id")
 		}
 	}
+
 	return router
 }
