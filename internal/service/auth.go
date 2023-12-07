@@ -23,7 +23,8 @@ type AuthService struct {
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	UserId int `json:"user_id"`
+	UserId int    `json:"user_id"`
+	Role   string `json:"role"`
 }
 
 func NewAuthService(repo repository.Authorization) *AuthService {
@@ -48,12 +49,15 @@ func (s *AuthService) GenerateToken(username, pass string) (string, error) {
 			IssuedAt:  time.Now().Unix(),
 		},
 		user.Id,
+		user.Role,
 	})
 
 	return token.SignedString([]byte(signingKey))
 }
 
-func (s *AuthService) ParseToken(token string) (int, error) {
+func (s *AuthService) ParseToken(token string) (model.UserIdentity, error) {
+	var u model.UserIdentity
+
 	userToken, err := jwt.ParseWithClaims(token, &tokenClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid jwt signing method")
@@ -61,15 +65,18 @@ func (s *AuthService) ParseToken(token string) (int, error) {
 		return []byte(signingKey), nil
 	})
 	if err != nil {
-		return 0, err
+		return u, err
 	}
 
 	claims, ok := userToken.Claims.(*tokenClaims)
 	if !ok {
-		return 0, errors.New("wrong claims type")
+		return u, errors.New("wrong claims type")
 	}
 
-	return claims.UserId, nil
+	u.Id = claims.UserId
+	u.Role = claims.Role
+
+	return u, nil
 }
 
 func (s *AuthService) generatePassHash(pass string) string {
