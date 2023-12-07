@@ -28,8 +28,21 @@ func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) error {
 		WHERE us.user_id=$1 AND u.id=$2`,
 		unitTable, groupTable, groupInSpaceTable, userSpacesTable)
 	err := r.db.Get(&count, query, userId, unitId)
-	if count == 0 {
-		return ErrOwnershipViolation
+	if err != nil {
+		return err
+	}
+	if count != 0 {
+		return nil
+	}
+
+	query = fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM %s usu
+		WHERE usu.user_id=$1`,
+		userUnitsTable)
+	err = r.db.Get(&count, query, userId)
+	if count != 0 {
+		return nil
 	}
 
 	return err
@@ -131,4 +144,18 @@ func (r *UnitSQLite) DeleteUnit(unitId int) error {
 	_, err := r.db.Exec(query, unitId)
 
 	return err
+}
+
+func (r *UnitSQLite) ReservedUnits(userId int) ([]model.StorageUnit, error) {
+	var units []model.StorageUnit
+
+	query := fmt.Sprintf(`
+		SELECT u.name, u.isOccupied, u.lastUsed, u.busyUntil
+		FROM %s u
+		INNER JOIN %s usu ON u.id=usu.unit_id
+		WHERE usu.user_id=$1`,
+		unitTable, userUnitsTable)
+	err := r.db.Get(&units, query, userId)
+
+	return units, err
 }

@@ -33,6 +33,8 @@ type Unit interface {
 	CreateUnit(groupId int, unit model.StorageUnit) (int, error)
 	DeleteUnit(unitId int) error
 	UpdateUnit(unitId int, input model.UpdateUnitInput) error
+
+	ReservedUnits(userId int) ([]model.StorageUnit, error)
 }
 
 type Group interface {

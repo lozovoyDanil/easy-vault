@@ -8,7 +8,7 @@ import (
 type Authorization interface {
 	CreateUser(user model.User) (int, error)
 	GenerateToken(username, password string) (string, error)
-	ParseToken(token string) (int, error)
+	ParseToken(token string) (model.UserIdentity, error)
 
 	UserInfo(userId int) (model.User, error)
 	EditUser(userId int, input model.UpdateUserInput) error
@@ -44,6 +44,8 @@ type Unit interface {
 	CreateUnit(userId, groupId int, unit model.StorageUnit) (int, error)
 	UpdateUnit(userId, unitId int, unit model.UpdateUnitInput) error
 	DeleteUnit(userId, unitId int) error
+
+	ReservedUnits(userId int) ([]model.StorageUnit, error)
 }
 
 type Service struct {

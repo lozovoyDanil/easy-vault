@@ -16,6 +16,7 @@ func (h *Handler) allSpaces(ctx *gin.Context) {
 	_, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	spaces, err := h.services.AllSpaces()
@@ -33,6 +34,7 @@ func (h *Handler) userSpaces(ctx *gin.Context) {
 	id, err := getUserId(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
 	}
 
 	spaces, err := h.services.UserSpaces(id)

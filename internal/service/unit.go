@@ -54,3 +54,7 @@ func (s *UnitService) DeleteUnit(userId, unitId int) error {
 
 	return s.Unit.DeleteUnit(unitId)
 }
+
+func (s *UnitService) ReservedUnits(userId int) ([]model.StorageUnit, error) {
+	return s.Unit.ReservedUnits(userId)
+}
