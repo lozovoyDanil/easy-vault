@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"main.go/internal/model"
 )
 
@@ -30,7 +30,7 @@ type Unit interface {
 
 	GroupUnits(groupId int) ([]model.StorageUnit, error)
 	UnitById(unitId int) (model.StorageUnit, error)
-	CreateUnit(groupId int, unit model.StorageUnit) (int, error)
+	CreateUnit(unit model.StorageUnit) (int, error)
 	DeleteUnit(unitId int) error
 	UpdateUnit(unitId int, input model.UpdateUnitInput) error
 
@@ -56,7 +56,7 @@ type Space interface {
 	UserSpaces(id int) ([]model.Space, error)
 	CreateSpace(userId int, space model.Space) (int, error)
 	UpdateSpace(userId, spaceId int, input model.UpdateSpaceInput) error
-	DeleteSpace(userId, spaceId int) error
+	DeleteSpace(spaceId int) error
 }
 
 type Repository struct {
@@ -67,10 +67,10 @@ type Repository struct {
 	Space
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
+func NewRepository(db *bun.DB) *Repository {
 	return &Repository{
 		Authorization: NewAuthSQLite(db),
-		Subscription:  NewSubRepository(db),
+		// Subscription:  NewSubRepository(db),
 		// Unit:          NewUnitSQLite(db),
 		Group: NewGroupSQLite(db),
 		Space: NewSpaceSQLite(db),

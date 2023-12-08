@@ -1,7 +1,10 @@
 package repository
 
 import (
-	"github.com/jmoiron/sqlx"
+	"database/sql"
+
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
 	_ "modernc.org/sqlite"
 )
 
@@ -16,8 +19,8 @@ const (
 	userSpacesTable   = "User_Spaces"
 )
 
-func NewSQLiteDB() (*sqlx.DB, error) {
-	db, err := sqlx.Open("sqlite", "./easy-vault.sqlite")
+func NewSQLiteDB() (*bun.DB, error) {
+	db, err := sql.Open("sqlite", "./easy-vault.sqlite")
 	if err != nil {
 		return nil, err
 	}
@@ -25,5 +28,8 @@ func NewSQLiteDB() (*sqlx.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	return db, nil
+
+	bunDB := bun.NewDB(db, sqlitedialect.New())
+
+	return bunDB, nil
 }
