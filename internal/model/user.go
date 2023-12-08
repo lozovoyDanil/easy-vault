@@ -5,7 +5,7 @@ import "github.com/uptrace/bun"
 type User struct {
 	bun.BaseModel `bun:"table:User,alias:u"`
 
-	Id       int    `bun:"id, pk, autoincrement"`
+	Id       int    `bun:"id,pk,autoincrement"`
 	FullName string `json:"name" bun:"fullName"`
 	Email    string `json:"email" bun:"email"`
 	Password string `json:"password" bun:"password"`
