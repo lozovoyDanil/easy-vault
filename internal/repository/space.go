@@ -92,8 +92,7 @@ func (r *SpaceSQLite) CreateSpace(userId int, space model.Space) (int, error) {
 	return space.Id, tx.Commit()
 }
 
-// TODO Change query so it doesn't check for ownership
-func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceInput) error {
+func (r *SpaceSQLite) UpdateSpace(spaceId int, input model.UpdateSpaceInput) error {
 	setValues := make([]string, 0)
 	args := make([]any, 0)
 	argId := 1
@@ -110,9 +109,9 @@ func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceIn
 	}
 
 	setQuery := strings.Join(setValues, ",")
-	query := fmt.Sprintf("UPDATE %s s SET %s FROM %s us WHERE s.id = us.space_id AND us.space_id = $%d AND us.user_id = $%d",
-		spaceTable, setQuery, userSpacesTable, argId, argId+1)
-	args = append(args, spaceId, userId)
+	query := fmt.Sprintf("UPDATE %s s SET %s FROM %s us WHERE s.id = us.space_id AND us.space_id = $%d",
+		spaceTable, setQuery, userSpacesTable, argId)
+	args = append(args, spaceId)
 	_, err := r.db.Exec(query, args...)
 
 	return err

@@ -32,7 +32,7 @@ type Space interface {
 
 type Group interface {
 	SpaceGroups(spaceId int) ([]model.StorageGroup, error)
-	GroupById(spaceId, groupId int) (model.StorageGroup, error)
+	GroupById(groupId int) (model.StorageGroup, error)
 	CreateGroup(userId, spaceId int, group model.StorageGroup) error
 	UpdateGroup(userId, groupId int, group model.UpdateGroupInput) error
 	DeleteGroup(userId, groupId int) error

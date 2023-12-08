@@ -34,7 +34,7 @@ func (s *SpaceService) UpdateSpace(userId, spaceId int, space model.UpdateSpaceI
 		return err
 	}
 
-	return s.repo.UpdateSpace(userId, spaceId, space)
+	return s.repo.UpdateSpace(spaceId, space)
 }
 
 func (s *SpaceService) DeleteSpace(userId, spaceId int) error {

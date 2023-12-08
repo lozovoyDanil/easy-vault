@@ -19,8 +19,8 @@ func (s *GroupService) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {
 	return s.Group.SpaceGroups(spaceId)
 }
 
-func (s *GroupService) GroupById(spaceId, groupId int) (model.StorageGroup, error) {
-	return s.Group.GroupById(spaceId, groupId)
+func (s *GroupService) GroupById(groupId int) (model.StorageGroup, error) {
+	return s.Group.GroupById(groupId)
 }
 
 func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup) error {
@@ -31,7 +31,7 @@ func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup
 	group.Size = 0
 	group.NumOfFree = 0
 
-	return s.Group.CreateGroup(userId, spaceId, group)
+	return s.Group.CreateGroup(group)
 }
 
 func (s *GroupService) UpdateGroup(userId, groupId int, input model.UpdateGroupInput) error {

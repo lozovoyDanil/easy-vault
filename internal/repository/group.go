@@ -46,19 +46,18 @@ func (r *GroupSQLite) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {
 
 }
 
-func (r *GroupSQLite) GroupById(spaceId, groupId int) (model.StorageGroup, error) {
+func (r *GroupSQLite) GroupById(groupId int) (model.StorageGroup, error) {
 	var group model.StorageGroup
 
 	err := r.db.NewSelect().
 		Model(&group).
-		Join(fmt.Sprintf("INNER JOIN %s s ON s.id=g.space_id", spaceTable)).
-		Where("s.id = ? AND g.id = ?", spaceId, groupId).
+		Where("g.id = ?", groupId).
 		Scan(context.Background())
 
 	return group, err
 }
 
-func (r *GroupSQLite) CreateGroup(userId, spaceId int, group model.StorageGroup) error {
+func (r *GroupSQLite) CreateGroup(group model.StorageGroup) error {
 	_, err := r.db.NewInsert().
 		Model(&group).
 		Exec(context.Background())
