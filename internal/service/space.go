@@ -42,5 +42,5 @@ func (s *SpaceService) DeleteSpace(userId, spaceId int) error {
 		return err
 	}
 
-	return s.repo.DeleteSpace(userId, spaceId)
+	return s.repo.DeleteSpace(spaceId)
 }

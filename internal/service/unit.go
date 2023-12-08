@@ -36,7 +36,9 @@ func (s *UnitService) CreateUnit(userId, groupId int, unit model.StorageUnit) (i
 		return 0, err
 	}
 
-	return s.Unit.CreateUnit(groupId, unit)
+	unit.GroupId = groupId
+
+	return s.Unit.CreateUnit(unit)
 }
 
 func (s *UnitService) UpdateUnit(userId, unitId int, input model.UpdateUnitInput) error {
