@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"database/sql"
 	"os"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"main.go/internal/controller"
 	"main.go/internal/repository"
 	"main.go/internal/service"
@@ -12,7 +14,7 @@ import (
 
 type Environment struct {
 	Handler *controller.Handler
-	DB      *sqlx.DB
+	DB      *bun.DB
 }
 
 func InitEnv() (*Environment, error) {
@@ -42,8 +44,8 @@ func (env *Environment) Remove() error {
 	return nil
 }
 
-func openDB() (*sqlx.DB, error) {
-	db, err := sqlx.Open("sqlite", "./test-db.sqlite")
+func openDB() (*bun.DB, error) {
+	db, err := sql.Open("sqlite", "./test-db.sqlite")
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +53,8 @@ func openDB() (*sqlx.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	bunDB := bun.NewDB(db, sqlitedialect.New())
 
 	// err = createTables(db)
 	// if err != nil {
@@ -62,7 +66,7 @@ func openDB() (*sqlx.DB, error) {
 	// 	return nil, err
 	// }
 
-	return db, nil
+	return bunDB, nil
 }
 
 // func createTableUser(db *sqlx.DB) error {
