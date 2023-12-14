@@ -89,6 +89,18 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			customer.POST("/extend-reserv/:unit_id", h.extendReserv)
 			customer.DELETE("/cancel-reserv/:unit_id", h.cancelReserv)
 		}
+
+		admin := api.Group("/admin")
+		admin.Use(h.adminAccess)
+		{
+			users := admin.Group("/users")
+			{
+				users.GET("/", h.allUsers)
+				users.GET("/:id", h.userById)
+				users.POST("/:id/ban", h.banUser)
+				users.DELETE("/:id", h.deleteUser)
+			}
+		}
 	}
 
 	return router

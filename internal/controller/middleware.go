@@ -11,7 +11,8 @@ import (
 const (
 	authHeader = "Authorization"
 
-	magaerRole   = "manager"
+	adminRole    = "admin"
+	managerRole  = "manager"
 	customerRole = "customer"
 )
 
@@ -44,6 +45,23 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 	ctx.Set("userRole", user.Role)
 }
 
+func (h *Handler) adminAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if errors.Is(err, ErrWrongRoleType) {
+		newErrorResponse(ctx, http.StatusInternalServerError, ErrWrongRoleType.Error())
+		return
+	}
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != adminRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not admin")
+		return
+	}
+}
+
 func (h *Handler) managerAccess(ctx *gin.Context) {
 	role, err := getUserRole(ctx)
 	if err != nil {
@@ -51,7 +69,7 @@ func (h *Handler) managerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != magaerRole {
+	if role != managerRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not manager")
 		return
 	}
@@ -73,13 +91,11 @@ func (h *Handler) customerAccess(ctx *gin.Context) {
 func getUserId(ctx *gin.Context) (int, error) {
 	id, ok := ctx.Get("userId")
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "user not found")
 		return 0, ErrUserNotFound
 	}
 
 	idInt, ok := id.(int)
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "wrong user id type")
 		return 0, ErrWrongIdType
 	}
 
@@ -89,13 +105,11 @@ func getUserId(ctx *gin.Context) (int, error) {
 func getUserRole(ctx *gin.Context) (string, error) {
 	role, ok := ctx.Get("userRole")
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "user not found")
 		return "", ErrUserNotFound
 	}
 
 	roleStr, ok := role.(string)
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "wrong user role type")
 		return "", ErrWrongRoleType
 	}
 
