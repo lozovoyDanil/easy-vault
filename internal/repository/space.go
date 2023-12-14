@@ -17,18 +17,18 @@ func NewSpaceSQLite(db *bun.DB) *SpaceSQLite {
 	return &SpaceSQLite{db: db}
 }
 
-func (r *SpaceSQLite) SpaceBelongsToUser(userId, spaceId int) error {
+func (r *SpaceSQLite) SpaceBelongsToUser(userId, spaceId int) (int, error) {
 	var count int
 
 	count, err := r.db.NewSelect().
 		Table(userSpacesTable).
 		Where("us.user_id = ? AND us.space_id = ?", userId, spaceId).
 		Count(context.Background())
-	if count == 0 {
-		return ErrOwnershipViolation
+	if err != nil {
+		return 0, err
 	}
 
-	return err
+	return count, nil
 }
 
 func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {

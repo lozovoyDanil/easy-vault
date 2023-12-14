@@ -19,6 +19,7 @@ type StorageUnit struct {
 }
 
 type UpdateUnitInput struct {
+	UserId     *int       `json:"userId"`
 	Name       *string    `json:"name"`
 	IsOccupied *bool      `json:"isOccupied"`
 	LastUsed   *time.Time `json:"lastUsed"`

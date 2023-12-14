@@ -1,14 +1,8 @@
 package repository
 
 import (
-	"errors"
-
 	"github.com/uptrace/bun"
 	"main.go/internal/model"
-)
-
-var (
-	ErrOwnershipViolation = errors.New("access forbiden or obj does not exist")
 )
 
 type Authorization interface {
@@ -26,7 +20,7 @@ type Subscription interface {
 }
 
 type Unit interface {
-	UnitBelongsToUser(userId, unitId int) error
+	UnitBelongsToUser(userId, unitId int) (int, error)
 
 	GroupUnits(groupId int) ([]model.StorageUnit, error)
 	UnitById(unitId int) (model.StorageUnit, error)
@@ -35,10 +29,12 @@ type Unit interface {
 	DeleteUnit(unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
+	UnitDetails(unitId int) (model.StorageUnit, error)
+	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
 }
 
 type Group interface {
-	GroupBelongsToUser(userId, groupId int) error
+	GroupBelongsToUser(userId, groupId int) (int, error)
 
 	SpaceGroups(spaceId int) ([]model.StorageGroup, error)
 	GroupById(groupId int) (model.StorageGroup, error)
@@ -48,7 +44,7 @@ type Group interface {
 }
 
 type Space interface {
-	SpaceBelongsToUser(userId, spaceId int) error
+	SpaceBelongsToUser(userId, spaceId int) (int, error)
 
 	AllSpaces() ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)

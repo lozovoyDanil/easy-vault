@@ -30,16 +30,24 @@ func (s *SpaceService) CreateSpace(userId int, space model.Space) (int, error) {
 }
 
 func (s *SpaceService) UpdateSpace(userId, spaceId int, space model.UpdateSpaceInput) error {
-	if err := s.repo.SpaceBelongsToUser(userId, spaceId); err != nil {
+	count, err := s.repo.SpaceBelongsToUser(userId, spaceId)
+	if err != nil {
 		return err
+	}
+	if count == 0 {
+		return ErrOwnershipViolation
 	}
 
 	return s.repo.UpdateSpace(spaceId, space)
 }
 
 func (s *SpaceService) DeleteSpace(userId, spaceId int) error {
-	if err := s.repo.SpaceBelongsToUser(userId, spaceId); err != nil {
+	count, err := s.repo.SpaceBelongsToUser(userId, spaceId)
+	if err != nil {
 		return err
+	}
+	if count == 0 {
+		return ErrOwnershipViolation
 	}
 
 	return s.repo.DeleteSpace(spaceId)

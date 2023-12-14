@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"main.go/internal/model"
+	"main.go/internal/service"
 )
 
 type unitsResponse struct {
@@ -164,6 +166,72 @@ func (h *Handler) reservedUnits(ctx *gin.Context) {
 	})
 }
 
+func (h *Handler) unitDetails(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	unitId, err := strconv.Atoi(ctx.Param("unit_id"))
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid unit id")
+		return
+	}
+
+	unit, err := h.services.UnitDetails(id, unitId)
+	if errors.Is(err, service.ErrOwnershipViolation) {
+		newErrorResponse(ctx, http.StatusForbidden, err.Error())
+		return
+	}
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, unit)
+}
+
 func (h *Handler) reserveUnit(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	unitId, err := strconv.Atoi(ctx.Param("unit_id"))
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid unit id")
+		return
+	}
+
+	var reservInfo model.UpdateUnitInput
+	if err := ctx.BindJSON(&reservInfo); err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.services.ReserveUnit(id, unitId, reservInfo)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, statusResp{
+		Status: "OK",
+	})
+}
+
+func (h *Handler) extendReserv(ctx *gin.Context) {
+}
+
+func (h *Handler) cancelReserv(ctx *gin.Context) {
+
+}
+
+func (h *Handler) lockUnit(ctx *gin.Context) {
+	fmt.Println("Получили запрос")
+}
+func (h *Handler) unlockUnit(ctx *gin.Context) {
 	fmt.Println("Получили запрос")
 }

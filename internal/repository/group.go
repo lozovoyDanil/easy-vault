@@ -17,7 +17,7 @@ func NewGroupSQLite(db *bun.DB) *GroupSQLite {
 	return &GroupSQLite{db: db}
 }
 
-func (r *GroupSQLite) GroupBelongsToUser(userId, groupId int) error {
+func (r *GroupSQLite) GroupBelongsToUser(userId, groupId int) (int, error) {
 	var count int
 
 	count, err := r.db.NewSelect().
@@ -26,11 +26,11 @@ func (r *GroupSQLite) GroupBelongsToUser(userId, groupId int) error {
 		Join(fmt.Sprintf("INNER JOIN %s us ON s.id = us.space_id", userSpacesTable)).
 		Where("us.user_id = ? AND g.id = ?", userId, groupId).
 		Count(context.Background())
-	if count == 0 {
-		return ErrOwnershipViolation
+	if err != nil {
+		return 0, err
 	}
 
-	return err
+	return count, nil
 }
 
 func (r *GroupSQLite) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {

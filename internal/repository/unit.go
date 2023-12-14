@@ -17,7 +17,7 @@ func NewUnitSQLite(db *bun.DB) *UnitSQLite {
 	return &UnitSQLite{db: db}
 }
 
-func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) error {
+func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) (int, error) {
 	var count int
 
 	count, err := r.db.NewSelect().
@@ -25,13 +25,10 @@ func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) error {
 		Where("user_id = ? AND unit_id = ?", userId, unitId).
 		Count(context.Background())
 	if err != nil {
-		return err
-	}
-	if count != 0 {
-		return nil
+		return 0, err
 	}
 
-	return nil
+	return count, nil
 }
 
 func (r *UnitSQLite) GroupUnits(groupId int) ([]model.StorageUnit, error) {
@@ -69,6 +66,11 @@ func (r *UnitSQLite) UpdateUnit(unitId int, input model.UpdateUnitInput) error {
 	args := make([]interface{}, 0)
 	argId := 1
 
+	if input.UserId != nil {
+		setValues = append(setValues, fmt.Sprintf("user_id=$%d", argId))
+		args = append(args, *input.UserId)
+		argId++
+	}
 	if input.Name != nil {
 		setValues = append(setValues, fmt.Sprintf("name=$%d", argId))
 		args = append(args, *input.Name)
@@ -117,4 +119,15 @@ func (r *UnitSQLite) ReservedUnits(userId int) ([]model.StorageUnit, error) {
 		Scan(context.Background())
 
 	return units, err
+}
+
+func (r *UnitSQLite) UnitDetails(unitId int) (model.StorageUnit, error) {
+	var unit model.StorageUnit
+
+	err := r.db.NewSelect().
+		Model(&unit).
+		Where("id = ?", unitId).
+		Scan(context.Background())
+
+	return unit, err
 }
