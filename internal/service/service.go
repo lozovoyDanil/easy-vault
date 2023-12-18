@@ -62,7 +62,7 @@ type Unit interface {
 	DeleteUnit(userId, unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
-	UnitDetails(userId, unitId int) (model.StorageUnit, error)
+	UnitDetails(userId, unitId int) (model.UnitDetails, error)
 	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
 }
 

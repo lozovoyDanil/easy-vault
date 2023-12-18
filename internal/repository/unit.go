@@ -121,13 +121,21 @@ func (r *UnitSQLite) ReservedUnits(userId int) ([]model.StorageUnit, error) {
 	return units, err
 }
 
-func (r *UnitSQLite) UnitDetails(unitId int) (model.StorageUnit, error) {
-	var unit model.StorageUnit
+func (r *UnitSQLite) LogHistory(log model.UnitHistory) error {
+	_, err := r.db.NewInsert().
+		Model(&log).
+		Exec(context.Background())
+
+	return err
+}
+
+func (r *UnitSQLite) UnitHistory(unitId int) ([]model.UnitHistory, error) {
+	var logs []model.UnitHistory
 
 	err := r.db.NewSelect().
-		Model(&unit).
-		Where("id = ?", unitId).
+		Model(&logs).
+		Where("unit_id = ?", unitId).
 		Scan(context.Background())
 
-	return unit, err
+	return logs, err
 }

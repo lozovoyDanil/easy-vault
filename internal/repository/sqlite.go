@@ -9,14 +9,13 @@ import (
 )
 
 const (
-	userTable         = "User"
-	userUnitsTable    = "User_Units"
-	unitTable         = "Unit"
-	unitInGroupTable  = "Group_Units"
-	groupTable        = "Group"
-	groupInSpaceTable = "Space_Groups"
-	spaceTable        = "Space"
-	userSpacesTable   = "User_Spaces"
+	userTable        = "User"
+	userUnitsTable   = "User_Units"
+	unitTable        = "Unit"
+	groupTable       = "Group"
+	spaceTable       = "Space"
+	userSpacesTable  = "User_Spaces"
+	unitHistoryTable = "Unit_History"
 )
 
 func NewSQLiteDB() (*bun.DB, error) {

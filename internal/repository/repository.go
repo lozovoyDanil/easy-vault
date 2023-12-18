@@ -36,8 +36,9 @@ type Unit interface {
 	DeleteUnit(unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
-	UnitDetails(unitId int) (model.StorageUnit, error)
 	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
+	LogHistory(log model.UnitHistory) error
+	UnitHistory(unitId int) ([]model.UnitHistory, error)
 }
 
 type Group interface {

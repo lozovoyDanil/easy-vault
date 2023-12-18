@@ -25,3 +25,8 @@ type UpdateUnitInput struct {
 	LastUsed   *time.Time `json:"lastUsed"`
 	BusyUntil  *time.Time `json:"busyUntil"`
 }
+
+type UnitDetails struct {
+	StorageUnit
+	History []UnitHistory `json:"history"`
+}
