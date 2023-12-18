@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	ErrOwnershipViolation = errors.New("access forbiden or obj does not exist")
 	//ERROR: user already banned.
 	ErrUserAlreadyBanned = errors.New("user already banned")
 	//ERROR: cannot delete user.
@@ -61,6 +62,8 @@ type Unit interface {
 	DeleteUnit(userId, unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
+	UnitDetails(userId, unitId int) (model.StorageUnit, error)
+	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
 }
 
 type Service struct {

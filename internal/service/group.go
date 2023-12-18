@@ -27,8 +27,12 @@ func (s *GroupService) GroupById(groupId int) (model.StorageGroup, error) {
 }
 
 func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup) error {
-	if err := s.Space.SpaceBelongsToUser(userId, spaceId); err != nil {
+	count, err := s.Space.SpaceBelongsToUser(userId, spaceId)
+	if err != nil {
 		return err
+	}
+	if count == 0 {
+		return ErrOwnershipViolation
 	}
 
 	group.Size = 0
@@ -38,16 +42,24 @@ func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup
 }
 
 func (s *GroupService) UpdateGroup(userId, groupId int, input model.UpdateGroupInput) error {
-	if err := s.Group.GroupBelongsToUser(userId, groupId); err != nil {
+	count, err := s.Group.GroupBelongsToUser(userId, groupId)
+	if err != nil {
 		return err
+	}
+	if count == 0 {
+		return ErrOwnershipViolation
 	}
 
 	return s.Group.UpdateGroup(groupId, input)
 }
 
 func (s *GroupService) DeleteGroup(userId, groupId int) error {
-	if err := s.Group.GroupBelongsToUser(userId, groupId); err != nil {
+	count, err := s.Group.GroupBelongsToUser(userId, groupId)
+	if err != nil {
 		return err
+	}
+	if count == 0 {
+		return ErrOwnershipViolation
 	}
 
 	return s.Group.DeleteGroup(groupId)
