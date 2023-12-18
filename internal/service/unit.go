@@ -12,7 +12,10 @@ type UnitService struct {
 }
 
 func NewUnitService(repo *repository.Repository) *UnitService {
-	return &UnitService{Unit: repo.Unit, Group: repo.Group}
+	return &UnitService{
+		Unit:  repo.Unit,
+		Group: repo.Group,
+	}
 }
 
 func (s *UnitService) GroupUnits(userId, groupId int) ([]model.StorageUnit, error) {

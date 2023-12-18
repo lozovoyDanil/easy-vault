@@ -11,12 +11,19 @@ var (
 	ErrOwnershipViolation = errors.New("access forbiden or obj does not exist")
 )
 
+type Admin interface {
+	AllUsers() ([]model.User, error)
+	BanUser(id int) error
+	DeleteUser(id int) error
+}
+
 type Authorization interface {
 	CreateUser(user model.User) (int, error)
 	GetUser(username, password string) (model.User, error)
 
 	UserInfo(userId int) (model.User, error)
-	EditUser(input model.UpdateUserInput) error
+	EditUser(userId int, input model.UpdateUserInput) error
+	UserIsBanned(userId int) (bool, error)
 }
 
 type Subscription interface {
@@ -50,7 +57,7 @@ type Group interface {
 type Space interface {
 	SpaceBelongsToUser(userId, spaceId int) error
 
-	AllSpaces() ([]model.Space, error)
+	AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)
 
 	UserSpaces(id int) ([]model.Space, error)
@@ -60,6 +67,7 @@ type Space interface {
 }
 
 type Repository struct {
+	Admin
 	Authorization
 	Subscription
 	Unit
@@ -69,10 +77,10 @@ type Repository struct {
 
 func NewRepository(db *bun.DB) *Repository {
 	return &Repository{
+		Admin:         NewAdminSQLite(db),
 		Authorization: NewAuthSQLite(db),
-		// Subscription:  NewSubRepository(db),
-		// Unit:          NewUnitSQLite(db),
-		Group: NewGroupSQLite(db),
-		Space: NewSpaceSQLite(db),
+		Unit:          NewUnitSQLite(db),
+		Group:         NewGroupSQLite(db),
+		Space:         NewSpaceSQLite(db),
 	}
 }

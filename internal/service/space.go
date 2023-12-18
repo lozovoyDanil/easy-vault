@@ -13,8 +13,8 @@ func NewSpaceService(repo repository.Space) *SpaceService {
 	return &SpaceService{repo: repo}
 }
 
-func (s *SpaceService) AllSpaces() ([]model.Space, error) {
-	return s.repo.AllSpaces()
+func (s *SpaceService) AllSpaces(filter model.SpaceFilter) ([]model.Space, error) {
+	return s.repo.AllSpaces(filter)
 }
 
 func (s *SpaceService) UserSpaces(id int) ([]model.Space, error) {

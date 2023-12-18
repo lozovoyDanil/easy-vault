@@ -1,9 +1,24 @@
 package service
 
 import (
+	"errors"
+
 	"main.go/internal/model"
 	"main.go/internal/repository"
 )
+
+var (
+	//ERROR: user already banned.
+	ErrUserAlreadyBanned = errors.New("user already banned")
+	//ERROR: cannot delete user.
+	ErrCannotDeleteUser = errors.New("cannot delete user")
+)
+
+type Admin interface {
+	AllUsers() ([]model.User, error)
+	BanUser(id int) error
+	DeleteUser(id int) error
+}
 
 type Authorization interface {
 	CreateUser(user model.User) (int, error)
@@ -21,7 +36,7 @@ type Subscription interface {
 }
 
 type Space interface {
-	AllSpaces() ([]model.Space, error)
+	AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
 
 	UserSpaces(id int) ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)
@@ -49,6 +64,7 @@ type Unit interface {
 }
 
 type Service struct {
+	Admin
 	Authorization
 	Subscription
 	Unit
@@ -58,10 +74,11 @@ type Service struct {
 
 func NewServices(repo *repository.Repository) *Service {
 	return &Service{
+		Admin:         NewAdminService(repo),
 		Authorization: NewAuthService(repo),
 		Subscription:  NewSubService(repo),
-		// Unit:          NewUnitService(repo),
-		Group: NewGroupService(repo),
-		Space: NewSpaceService(repo),
+		Unit:          NewUnitService(repo),
+		Group:         NewGroupService(repo),
+		Space:         NewSpaceService(repo),
 	}
 }

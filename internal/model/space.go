@@ -16,3 +16,11 @@ type UpdateSpaceInput struct {
 	Name *string `json:"name"`
 	Addr *string `json:"addr"`
 }
+
+type SpaceFilter struct {
+	Name    *string `json:"name"`
+	Addr    *string `json:"addr"`
+	Order   *string `json:"order"`
+	MinSize *int    `json:"minSize"`
+	MaxSize *int    `json:"maxSize"`
+}

@@ -31,12 +31,50 @@ func (r *SpaceSQLite) SpaceBelongsToUser(userId, spaceId int) error {
 	return err
 }
 
-func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {
+func (r *SpaceSQLite) AllSpaces(filter model.SpaceFilter) ([]model.Space, error) {
 	var spaces []model.Space
+	filterValues := make([]string, 0)
+	args := make([]any, 0)
+	argId := 1
 
-	err := r.db.NewSelect().
-		Model(&spaces).
-		Scan(context.Background())
+	if filter.Name != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.name LIKE $%d", argId))
+		args = append(args, fmt.Sprintf("%%%s%%", *filter.Name))
+		argId++
+	}
+	if filter.Addr != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.addr LIKE $%d", argId))
+		args = append(args, fmt.Sprintf("%%%s%%", *filter.Addr))
+		argId++
+	}
+	if filter.MinSize != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.size >= $%d", argId))
+		args = append(args, *filter.MinSize)
+		argId++
+	}
+	if filter.MaxSize != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.size <= $%d", argId))
+		args = append(args, *filter.MaxSize)
+		argId++
+	}
+
+	filterQuery := strings.Join(filterValues, " AND ")
+	query := fmt.Sprintf("SELECT s.* FROM %s s WHERE 1=1%s", spaceTable, filterQuery)
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var space model.Space
+		err := rows.Scan(&space.Id, &space.Name, &space.Addr, &space.Size, &space.NumOfFree)
+		if err != nil {
+			return nil, err
+		}
+
+		spaces = append(spaces, space)
+	}
 
 	return spaces, err
 }

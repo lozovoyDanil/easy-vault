@@ -12,7 +12,10 @@ type GroupService struct {
 }
 
 func NewGroupService(repo *repository.Repository) *GroupService {
-	return &GroupService{Group: repo.Group, Space: repo.Space}
+	return &GroupService{
+		Group: repo.Group,
+		Space: repo.Space,
+	}
 }
 
 func (s *GroupService) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {

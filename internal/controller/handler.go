@@ -79,8 +79,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			reserv := customer.Group("/curr-reservations")
 			{
 				reserv.GET("/", h.reservedUnits)
-				reserv.GET("/:unit_id", h.unitById)
-				// reserv.GET("/:unit_id/details")
+				reserv.GET("/:unit_id/details", h.unitDetails)
 
 				// reserv.POST("/:unit_id/unlock")
 				// reserv.POST("/:unit_id/lock")

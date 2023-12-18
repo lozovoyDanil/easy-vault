@@ -69,7 +69,7 @@ func (h *Handler) managerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != managerRole {
+	if role != managerRole && role != adminRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not manager")
 		return
 	}
@@ -82,7 +82,7 @@ func (h *Handler) customerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != customerRole {
+	if role != customerRole && role != adminRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not customer")
 		return
 	}

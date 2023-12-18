@@ -167,3 +167,7 @@ func (h *Handler) reservedUnits(ctx *gin.Context) {
 func (h *Handler) reserveUnit(ctx *gin.Context) {
 	fmt.Println("Получили запрос")
 }
+
+func (h *Handler) unitDetails(ctx *gin.Context) {
+	fmt.Println("Получили запрос")
+}
