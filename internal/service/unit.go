@@ -37,6 +37,24 @@ func NewUnitService(repo *repository.Repository) *UnitService {
 	}
 }
 
+func (s *UnitService) AuthorizeAccess(user model.UserIdentity, objId int) error {
+	switch user.Role {
+	case model.AdminRole:
+	case model.ManagerRole:
+		return nil
+	case model.CustomerRole:
+		count, err := s.Unit.UnitBelongsToUser(user.Id, objId)
+		if err != nil {
+			return err
+		}
+		if count == 0 {
+			return ErrOwnershipViolation
+		}
+
+	}
+	return nil
+}
+
 func (s *UnitService) GroupUnits(userId, groupId int) ([]model.StorageUnit, error) {
 	count, err := s.Group.GroupBelongsToUser(userId, groupId)
 	if err != nil {
@@ -121,16 +139,13 @@ func (s *UnitService) ReservedUnits(userId int) ([]model.StorageUnit, error) {
 	return s.Unit.ReservedUnits(userId)
 }
 
-func (s *UnitService) UnitDetails(userId, unitId int) (model.UnitDetails, error) {
-	count, err := s.Unit.UnitBelongsToUser(userId, unitId)
+func (s *UnitService) UnitDetails(user model.UserIdentity, unitId int) (model.UnitDetails, error) {
+	err := checkAccess(s, user, unitId)
 	if err != nil {
 		return model.UnitDetails{}, err
 	}
-	if count == 0 {
-		return model.UnitDetails{}, ErrOwnershipViolation
-	}
 
-	unit, err := s.UnitById(userId, unitId)
+	unit, err := s.UnitById(user.Id, unitId)
 	if err != nil {
 		return model.UnitDetails{}, err
 	}

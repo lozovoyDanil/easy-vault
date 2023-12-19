@@ -6,14 +6,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"main.go/internal/model"
 )
 
 const (
 	authHeader = "Authorization"
-
-	adminRole    = "admin"
-	managerRole  = "manager"
-	customerRole = "customer"
 )
 
 var (
@@ -43,6 +40,7 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 
 	ctx.Set("userId", user.Id)
 	ctx.Set("userRole", user.Role)
+	ctx.Set("userIdentity", user)
 }
 
 func (h *Handler) adminAccess(ctx *gin.Context) {
@@ -56,7 +54,7 @@ func (h *Handler) adminAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != adminRole {
+	if role != model.AdminRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not admin")
 		return
 	}
@@ -69,7 +67,7 @@ func (h *Handler) managerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != managerRole && role != adminRole {
+	if role != model.ManagerRole && role != model.AdminRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not manager")
 		return
 	}
@@ -82,7 +80,7 @@ func (h *Handler) customerAccess(ctx *gin.Context) {
 		return
 	}
 
-	if role != customerRole && role != adminRole {
+	if role != model.CustomerRole && role != model.AdminRole {
 		newErrorResponse(ctx, http.StatusForbidden, "user is not customer")
 		return
 	}
@@ -114,4 +112,18 @@ func getUserRole(ctx *gin.Context) (string, error) {
 	}
 
 	return roleStr, nil
+}
+
+func getUserIdentity(ctx *gin.Context) (*model.UserIdentity, error) {
+	identity, ok := ctx.Get("userIdentity")
+	if !ok {
+		return nil, ErrUserNotFound
+	}
+
+	identityUser, ok := identity.(*model.UserIdentity)
+	if !ok {
+		return nil, ErrWrongRoleType
+	}
+
+	return identityUser, nil
 }

@@ -2,6 +2,12 @@ package model
 
 import "github.com/uptrace/bun"
 
+const (
+	AdminRole    = "admin"
+	ManagerRole  = "manager"
+	CustomerRole = "customer"
+)
+
 type User struct {
 	bun.BaseModel `bun:"table:User,alias:u"`
 

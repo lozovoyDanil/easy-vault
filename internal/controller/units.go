@@ -167,7 +167,12 @@ func (h *Handler) reservedUnits(ctx *gin.Context) {
 }
 
 func (h *Handler) unitDetails(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	// id, err := getUserId(ctx)
+	// if err != nil {
+	// 	newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+	// 	return
+	// }
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -179,7 +184,7 @@ func (h *Handler) unitDetails(ctx *gin.Context) {
 		return
 	}
 
-	unit, err := h.services.UnitDetails(id, unitId)
+	unit, err := h.services.UnitDetails(*user, unitId)
 	if errors.Is(err, service.ErrOwnershipViolation) {
 		newErrorResponse(ctx, http.StatusForbidden, err.Error())
 		return
