@@ -14,7 +14,7 @@ type StorageGroup struct {
 	PricePer  int    `json:"pricePer" bun:"pricePer"`
 }
 
-type UpdateGroupInput struct {
+type GroupInput struct {
 	Name     *string `json:"name"`
 	Price    *int    `json:"price"`
 	PricePer *int    `json:"pricePer"`

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"main.go/internal/model"
+	m "main.go/internal/model"
 	"main.go/internal/repository"
 )
 
@@ -18,16 +18,16 @@ func NewGroupService(repo *repository.Repository) *GroupService {
 	}
 }
 
-func (s *GroupService) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {
+func (s *GroupService) SpaceGroups(spaceId int) ([]m.StorageGroup, error) {
 	return s.Group.SpaceGroups(spaceId)
 }
 
-func (s *GroupService) GroupById(groupId int) (model.StorageGroup, error) {
+func (s *GroupService) GroupById(groupId int) (m.StorageGroup, error) {
 	return s.Group.GroupById(groupId)
 }
 
-func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup) error {
-	count, err := s.Space.SpaceBelongsToUser(userId, spaceId)
+func (s *GroupService) CreateGroup(user m.UserIdentity, spaceId int, group m.StorageGroup) error {
+	count, err := s.Space.SpaceBelongsToUser(user.Id, spaceId)
 	if err != nil {
 		return err
 	}
@@ -41,24 +41,16 @@ func (s *GroupService) CreateGroup(userId, spaceId int, group model.StorageGroup
 	return s.Group.CreateGroup(group)
 }
 
-func (s *GroupService) UpdateGroup(userId, groupId int, input model.UpdateGroupInput) error {
-	count, err := s.Group.GroupBelongsToUser(userId, groupId)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
+func (s *GroupService) UpdateGroup(user m.UserIdentity, groupId int, input m.GroupInput) error {
+	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
 		return ErrOwnershipViolation
 	}
 
 	return s.Group.UpdateGroup(groupId, input)
 }
 
-func (s *GroupService) DeleteGroup(userId, groupId int) error {
-	count, err := s.Group.GroupBelongsToUser(userId, groupId)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
+func (s *GroupService) DeleteGroup(user m.UserIdentity, groupId int) error {
+	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
 		return ErrOwnershipViolation
 	}
 

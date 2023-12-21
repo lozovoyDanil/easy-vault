@@ -18,7 +18,7 @@ type StorageUnit struct {
 	BusyUntil  time.Time `json:"busyUntil" bun:"busyUntil"`
 }
 
-type UpdateUnitInput struct {
+type UnitInput struct {
 	UserId     *int       `json:"userId"`
 	Name       *string    `json:"name"`
 	IsOccupied *bool      `json:"isOccupied"`

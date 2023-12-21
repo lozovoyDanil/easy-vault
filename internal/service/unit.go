@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	"main.go/internal/model"
+	m "main.go/internal/model"
 	"main.go/internal/repository"
 )
 
@@ -37,54 +37,30 @@ func NewUnitService(repo *repository.Repository) *UnitService {
 	}
 }
 
-func (s *UnitService) AuthorizeAccess(user model.UserIdentity, objId int) error {
-	switch user.Role {
-	case model.AdminRole:
-	case model.ManagerRole:
-		return nil
-	case model.CustomerRole:
-		count, err := s.Unit.UnitBelongsToUser(user.Id, objId)
-		if err != nil {
-			return err
-		}
-		if count == 0 {
-			return ErrOwnershipViolation
-		}
-
-	}
-	return nil
-}
-
-func (s *UnitService) GroupUnits(userId, groupId int) ([]model.StorageUnit, error) {
-	count, err := s.Group.GroupBelongsToUser(userId, groupId)
-	if err != nil {
-		return nil, err
-	}
-	if count == 0 {
+func (s *UnitService) GroupUnits(user m.UserIdentity, groupId int) ([]m.StorageUnit, error) {
+	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
 		return nil, ErrOwnershipViolation
 	}
 
 	return s.Unit.GroupUnits(groupId)
 }
 
-func (s *UnitService) UnitById(userId, unitId int) (model.StorageUnit, error) {
-	count, err := s.Unit.UnitBelongsToUser(userId, unitId)
+// TODO: delete this function, use unitdetails instead
+func (s *UnitService) UnitById(userId, unitId int) (m.StorageUnit, error) {
+	ownerId, err := s.Unit.UnitOwnerId(unitId)
 	if err != nil {
-		return model.StorageUnit{}, err
+		return m.StorageUnit{}, err
 	}
-	if count == 0 {
-		return model.StorageUnit{}, ErrOwnershipViolation
+	if ownerId != userId {
+		return m.StorageUnit{}, ErrOwnershipViolation
 	}
 
 	return s.Unit.UnitById(unitId)
 }
 
-func (s *UnitService) CreateUnit(userId, groupId int, unit model.StorageUnit) (int, error) {
-	count, err := s.Group.GroupBelongsToUser(userId, groupId)
-	if err != nil {
-		return 0, err
-	}
-	if count == 0 {
+func (s *UnitService) CreateUnit(user m.UserIdentity, groupId int, unit m.StorageUnit) (int, error) {
+	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
+		s.LogHistory(user.Id, groupId, StatusForbidden, UnitCreateAction)
 		return 0, ErrOwnershipViolation
 	}
 
@@ -93,72 +69,65 @@ func (s *UnitService) CreateUnit(userId, groupId int, unit model.StorageUnit) (i
 	return s.Unit.CreateUnit(unit)
 }
 
-func (s *UnitService) UpdateUnit(userId, unitId int, input model.UpdateUnitInput) error {
-	count, err := s.Unit.UnitBelongsToUser(userId, unitId)
-	if err != nil {
-		s.LogHistory(userId, unitId, StatusFailed, UnitUpdateAction)
-		return err
-	}
-	if count == 0 {
-		s.LogHistory(userId, unitId, StatusForbidden, UnitUpdateAction)
+func (s *UnitService) UpdateUnit(user m.UserIdentity, unitId int, input m.UnitInput) error {
+	if !s.Unit.ManagerOwnsUnit(user.Id, unitId) && user.Role != m.AdminRole {
+		s.LogHistory(user.Id, unitId, StatusForbidden, UnitUpdateAction)
 		return ErrOwnershipViolation
 	}
 
-	err = s.Unit.UpdateUnit(unitId, input)
+	err := s.Unit.UpdateUnit(unitId, input)
 	if err != nil {
-		s.LogHistory(userId, unitId, StatusFailed, UnitUpdateAction)
+		s.LogHistory(user.Id, unitId, StatusFailed, UnitUpdateAction)
 		return err
 	}
-	s.LogHistory(userId, unitId, StatusOK, UnitUpdateAction)
+	s.LogHistory(user.Id, unitId, StatusOK, UnitUpdateAction)
 
 	return nil
 }
 
-func (s *UnitService) DeleteUnit(userId, unitId int) error {
-	count, err := s.Unit.UnitBelongsToUser(userId, unitId)
-	if err != nil {
-		s.LogHistory(userId, unitId, StatusFailed, UnitDeleteAction)
-		return err
-	}
-	if count == 0 {
-		s.LogHistory(userId, unitId, StatusForbidden, UnitDeleteAction)
+func (s *UnitService) DeleteUnit(user m.UserIdentity, unitId int) error {
+	if !s.Unit.ManagerOwnsUnit(user.Id, unitId) && user.Role != m.AdminRole {
+		s.LogHistory(user.Id, unitId, StatusForbidden, UnitDeleteAction)
 		return ErrOwnershipViolation
 	}
 
-	err = s.Unit.DeleteUnit(unitId)
+	err := s.Unit.DeleteUnit(unitId)
 	if err != nil {
-		s.LogHistory(userId, unitId, StatusFailed, UnitDeleteAction)
+		s.LogHistory(user.Id, unitId, StatusFailed, UnitDeleteAction)
 		return err
 	}
-	s.LogHistory(userId, unitId, StatusOK, UnitDeleteAction)
+	s.LogHistory(user.Id, unitId, StatusOK, UnitDeleteAction)
 
 	return nil
 }
 
-func (s *UnitService) ReservedUnits(userId int) ([]model.StorageUnit, error) {
+func (s *UnitService) ReservedUnits(userId int) ([]m.StorageUnit, error) {
 	return s.Unit.ReservedUnits(userId)
 }
 
-func (s *UnitService) UnitDetails(user model.UserIdentity, unitId int) (model.UnitDetails, error) {
-	err := checkAccess(s, user, unitId)
+func (s *UnitService) UnitDetails(user m.UserIdentity, unitId int) (m.UnitDetails, error) {
+	ownerId, err := s.Unit.UnitOwnerId(unitId)
 	if err != nil {
-		return model.UnitDetails{}, err
+		return m.UnitDetails{}, err
+	}
+	if ownerId != user.Id && user.Role == m.CustomerRole {
+		return m.UnitDetails{}, ErrOwnershipViolation
 	}
 
 	unit, err := s.UnitById(user.Id, unitId)
 	if err != nil {
-		return model.UnitDetails{}, err
+		return m.UnitDetails{}, err
 	}
 	hist, err := s.Unit.UnitHistory(unitId)
 	if err != nil {
-		return model.UnitDetails{}, err
+		return m.UnitDetails{}, err
 	}
 
-	return model.UnitDetails{StorageUnit: unit, History: hist}, nil
+	return m.UnitDetails{StorageUnit: unit, History: hist}, nil
 }
 
-func (s *UnitService) ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error {
-	input := model.UpdateUnitInput{
+func (s *UnitService) ReserveUnit(userId, unitId int, reservInfo m.UnitInput) error {
+	input := m.UnitInput{
 		UserId:    &userId,
 		BusyUntil: reservInfo.BusyUntil,
 	}
@@ -173,7 +142,7 @@ func (s *UnitService) ReserveUnit(userId, unitId int, reservInfo model.UpdateUni
 }
 
 func (s *UnitService) LogHistory(userId, unitId, status int, action string) error {
-	log := model.UnitHistory{
+	log := m.UnitHistory{
 		UnitId:     unitId,
 		UserId:     userId,
 		Status:     status,

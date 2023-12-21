@@ -17,20 +17,17 @@ func NewGroupSQLite(db *bun.DB) *GroupSQLite {
 	return &GroupSQLite{db: db}
 }
 
-func (r *GroupSQLite) GroupBelongsToUser(userId, groupId int) (int, error) {
+func (r *GroupSQLite) ManagerOwnsGroup(managerId, groupId int) bool {
 	var count int
 
 	count, err := r.db.NewSelect().
 		Table(groupTable).
 		Join(fmt.Sprintf("INNER JOIN %s s ON s.id=g.space_id", spaceTable)).
-		Join(fmt.Sprintf("INNER JOIN %s us ON s.id = us.space_id", userSpacesTable)).
-		Where("us.user_id = ? AND g.id = ?", userId, groupId).
+		Join(fmt.Sprintf("INNER JOIN %s us ON us.id=s.manager_id", userSpacesTable)).
+		Where("g.id = ? AND us.user_id = ?", groupId, managerId).
 		Count(context.Background())
-	if err != nil {
-		return 0, err
-	}
 
-	return count, nil
+	return count > 0 && err == nil
 }
 
 func (r *GroupSQLite) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {
@@ -65,7 +62,7 @@ func (r *GroupSQLite) CreateGroup(group model.StorageGroup) error {
 	return err
 }
 
-func (r *GroupSQLite) UpdateGroup(groupId int, input model.UpdateGroupInput) error {
+func (r *GroupSQLite) UpdateGroup(groupId int, input model.GroupInput) error {
 	setValues := make([]string, 0)
 	args := make([]any, 0)
 	argId := 1

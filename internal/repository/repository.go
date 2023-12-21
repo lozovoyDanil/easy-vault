@@ -27,27 +27,28 @@ type Subscription interface {
 }
 
 type Unit interface {
-	UnitBelongsToUser(userId, unitId int) (int, error)
+	UnitOwnerId(unitId int) (int, error)
+	ManagerOwnsUnit(managerId, unitId int) bool
 
 	GroupUnits(groupId int) ([]model.StorageUnit, error)
 	UnitById(unitId int) (model.StorageUnit, error)
 	CreateUnit(unit model.StorageUnit) (int, error)
-	UpdateUnit(unitId int, input model.UpdateUnitInput) error
+	UpdateUnit(unitId int, input model.UnitInput) error
 	DeleteUnit(unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
-	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
+	ReserveUnit(userId, unitId int, reservInfo model.UnitInput) error
 	LogHistory(log model.UnitHistory) error
 	UnitHistory(unitId int) ([]model.UnitHistory, error)
 }
 
 type Group interface {
-	GroupBelongsToUser(userId, groupId int) (int, error)
+	ManagerOwnsGroup(managerId, groupId int) bool
 
 	SpaceGroups(spaceId int) ([]model.StorageGroup, error)
 	GroupById(groupId int) (model.StorageGroup, error)
 	CreateGroup(group model.StorageGroup) error
-	UpdateGroup(groupId int, input model.UpdateGroupInput) error
+	UpdateGroup(groupId int, input model.GroupInput) error
 	DeleteGroup(groupId int) error
 }
 

@@ -17,18 +17,32 @@ func NewUnitSQLite(db *bun.DB) *UnitSQLite {
 	return &UnitSQLite{db: db}
 }
 
-func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) (int, error) {
+func (r *UnitSQLite) UserOwnerId(unitId int) (int, error) {
+	var id int
+
+	err := r.db.NewSelect().
+		Table(unitTable).
+		ColumnExpr("user_id").
+		Where("id = ?", unitId).
+		Scan(context.Background(), &id)
+
+	return id, err
+}
+
+func (r *UnitSQLite) ManagerOwnsUnit(userId, unitId int) bool {
 	var count int
 
 	count, err := r.db.NewSelect().
-		Table(userUnitsTable).
-		Where("user_id = ? AND unit_id = ?", userId, unitId).
+		Table(unitTable).
+		ColumnExpr("u.id").
+		Join(fmt.Sprintf("INNER JOIN %s g ON g.id = u.group_id", groupTable)).
+		Join(fmt.Sprintf("INNER JOIN %s s ON s.id = g.space_id", spaceTable)).
+		Join(fmt.Sprintf("INNER JOIN %s us ON us.space_id = s.id", userSpacesTable)).
+		Where("us.user_id = ?", userId).
+		Where("u.id = ?", unitId).
 		Count(context.Background())
-	if err != nil {
-		return 0, err
-	}
 
-	return count, nil
+	return count > 0 && err == nil
 }
 
 func (r *UnitSQLite) GroupUnits(groupId int) ([]model.StorageUnit, error) {
@@ -61,7 +75,7 @@ func (r *UnitSQLite) CreateUnit(unit model.StorageUnit) (int, error) {
 	return unit.Id, err
 }
 
-func (r *UnitSQLite) UpdateUnit(unitId int, input model.UpdateUnitInput) error {
+func (r *UnitSQLite) UpdateUnit(unitId int, input model.UnitInput) error {
 	setValues := make([]string, 0)
 	args := make([]interface{}, 0)
 	argId := 1
