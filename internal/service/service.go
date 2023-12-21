@@ -25,7 +25,6 @@ type Authorization interface {
 	CreateUser(user model.User) (int, error)
 	GenerateToken(username, password string) (string, error)
 	ParseToken(token string) (model.UserIdentity, error)
-
 	UserInfo(userId int) (model.User, error)
 	EditUser(userId int, input model.UpdateUserInput) error
 }
@@ -38,7 +37,6 @@ type Subscription interface {
 
 type Space interface {
 	AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
-
 	UserSpaces(id int) ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)
 	CreateSpace(userId int, space model.Space) (int, error)
@@ -60,7 +58,6 @@ type Unit interface {
 	CreateUnit(userId, groupId int, unit model.StorageUnit) (int, error)
 	UpdateUnit(userId, unitId int, unit model.UpdateUnitInput) error
 	DeleteUnit(userId, unitId int) error
-
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
 	UnitDetails(user model.UserIdentity, unitId int) (model.UnitDetails, error)
 	ReserveUnit(userId, unitId int, reservInfo model.UpdateUnitInput) error
@@ -69,7 +66,7 @@ type Unit interface {
 type Service struct {
 	Admin
 	Authorization
-	Subscription
+	// Subscription
 	Unit
 	Group
 	Space
@@ -79,9 +76,9 @@ func NewServices(repo *repository.Repository) *Service {
 	return &Service{
 		Admin:         NewAdminService(repo),
 		Authorization: NewAuthService(repo),
-		Subscription:  NewSubService(repo),
-		Unit:          NewUnitService(repo),
-		Group:         NewGroupService(repo),
-		Space:         NewSpaceService(repo),
+		// Subscription:  NewSubService(repo),
+		Unit:  NewUnitService(repo),
+		Group: NewGroupService(repo),
+		Space: NewSpaceService(repo),
 	}
 }
