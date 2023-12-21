@@ -19,7 +19,14 @@ func (h *Handler) allSpaces(ctx *gin.Context) {
 		return
 	}
 
-	spaces, err := h.services.AllSpaces()
+	var filter model.SpaceFilter
+	err = ctx.BindJSON(&filter)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	spaces, err := h.services.AllSpaces(filter)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

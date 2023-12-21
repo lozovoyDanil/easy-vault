@@ -1,11 +1,22 @@
 package model
 
+import "github.com/uptrace/bun"
+
+const (
+	AdminRole    = "admin"
+	ManagerRole  = "manager"
+	CustomerRole = "customer"
+)
+
 type User struct {
-	Id       int    `db:"id"`
-	FullName string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `db:"role"`
+	bun.BaseModel `bun:"table:User,alias:u"`
+
+	Id       int    `bun:"id,pk,autoincrement"`
+	FullName string `json:"name" bun:"fullName"`
+	Email    string `json:"email" bun:"email,unique,notnull"`
+	Password string `json:"password" bun:"password,notnull"`
+	Role     string `json:"role" bun:"role,notnull"`
+	IsBanned bool   `json:"isBanned" bun:"isBanned"`
 }
 
 type UserIdentity struct {
@@ -14,7 +25,6 @@ type UserIdentity struct {
 }
 
 type UpdateUserInput struct {
-	Id       int
 	FullName *string `json:"name"`
 	Email    *string `json:"email"`
 	Password *string `json:"password"`

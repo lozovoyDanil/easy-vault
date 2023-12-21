@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 
 func getAuthToken() string {
 	w := httptest.NewRecorder()
-	query := []byte(`{"login": "danilozovoy@gmail.com", "password": "123456"}`)
+	query := []byte(`{"login": "danilozovoy@gmail.com", "password": "12345678"}`)
 	req, _ := http.NewRequest("POST", "/auth/sign-in", bytes.NewBuffer(query))
 	router.ServeHTTP(w, req)
 

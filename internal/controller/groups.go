@@ -43,19 +43,13 @@ func (h *Handler) groupById(ctx *gin.Context) {
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
-	if err != nil {
-		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
-		return
-	}
-
 	groupId, err := strconv.Atoi(ctx.Param("group_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
 		return
 	}
 
-	group, err := h.services.GroupById(spaceId, groupId)
+	group, err := h.services.GroupById(groupId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

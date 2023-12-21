@@ -37,6 +37,17 @@ func (s *AuthService) CreateUser(user model.User) (int, error) {
 	return s.repo.CreateUser(user)
 }
 
+func (s *AuthService) UserInfo(userId int) (model.User, error) {
+	return s.repo.UserInfo(userId)
+}
+
+func (s *AuthService) EditUser(userId int, input model.UpdateUserInput) error {
+	hashedPass := s.generatePassHash(*input.Password)
+	input.Password = &hashedPass
+
+	return s.repo.EditUser(userId, input)
+}
+
 func (s *AuthService) GenerateToken(username, pass string) (string, error) {
 	user, err := s.repo.GetUser(username, s.generatePassHash(pass))
 	if err != nil {
@@ -84,16 +95,4 @@ func (s *AuthService) generatePassHash(pass string) string {
 	hash.Write([]byte(pass))
 
 	return fmt.Sprintf("%x", hash.Sum([]byte(salt)))
-}
-
-func (s *AuthService) UserInfo(userId int) (model.User, error) {
-	return s.repo.UserInfo(userId)
-}
-
-func (s *AuthService) EditUser(userId int, input model.UpdateUserInput) error {
-	input.Id = userId
-	hashedPass := s.generatePassHash(*input.Password)
-	input.Password = &hashedPass
-
-	return s.repo.EditUser(input)
 }

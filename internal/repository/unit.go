@@ -1,108 +1,64 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"main.go/internal/model"
 )
 
 type UnitSQLite struct {
-	db *sqlx.DB
+	db *bun.DB
 }
 
-func NewUnitSQLite(db *sqlx.DB) *UnitSQLite {
+func NewUnitSQLite(db *bun.DB) *UnitSQLite {
 	return &UnitSQLite{db: db}
 }
 
-func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) error {
+func (r *UnitSQLite) UnitBelongsToUser(userId, unitId int) (int, error) {
 	var count int
 
-	query := fmt.Sprintf(`
-		SELECT COUNT(*)
-		FROM %s u
-		INNER JOIN %s gu ON u.id=gu.unit_id
-		INNER JOIN %s sg ON gu.group_id=sg.group_id
-		INNER JOIN %s us ON sg.space_id=us.space_id
-		WHERE us.user_id=$1 AND u.id=$2`,
-		unitTable, groupTable, groupInSpaceTable, userSpacesTable)
-	err := r.db.Get(&count, query, userId, unitId)
+	count, err := r.db.NewSelect().
+		Table(userUnitsTable).
+		Where("user_id = ? AND unit_id = ?", userId, unitId).
+		Count(context.Background())
 	if err != nil {
-		return err
-	}
-	if count != 0 {
-		return nil
+		return 0, err
 	}
 
-	query = fmt.Sprintf(`
-		SELECT COUNT(*)
-		FROM %s usu
-		WHERE usu.user_id=$1`,
-		userUnitsTable)
-	err = r.db.Get(&count, query, userId)
-	if count != 0 {
-		return nil
-	}
-
-	return err
+	return count, nil
 }
 
 func (r *UnitSQLite) GroupUnits(groupId int) ([]model.StorageUnit, error) {
 	var units []model.StorageUnit
 
-	query := fmt.Sprintf(`
-		SELECT u.name, u.isOccupied, u.lastUsed, u.busyUntil 
-		FROM %s u INNER JOIN %s gu 
-		ON u.id=gu.unit_id 
-		WHERE group_id = $1`,
-		unitTable, unitInGroupTable)
-	err := r.db.Select(&units, query, groupId)
-	if err != nil {
-		return nil, err
-	}
+	err := r.db.NewSelect().
+		Model(&units).
+		Where("group_id = ?", groupId).
+		Scan(context.Background())
 
-	return units, nil
+	return units, err
 }
 
 func (r *UnitSQLite) UnitById(unitId int) (model.StorageUnit, error) {
 	var unit model.StorageUnit
 
-	query := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", unitTable)
-	err := r.db.Get(&unit, query, unitId)
-	if err != nil {
-		return model.StorageUnit{}, err
-	}
+	err := r.db.NewSelect().
+		Model(&unit).
+		Where("id = ?", unitId).
+		Scan(context.Background())
 
-	return unit, nil
+	return unit, err
 }
 
-func (r *UnitSQLite) CreateUnit(groupId int, unit model.StorageUnit) (int, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return 0, err
-	}
+func (r *UnitSQLite) CreateUnit(unit model.StorageUnit) (int, error) {
+	_, err := r.db.NewInsert().
+		Model(&unit).
+		Exec(context.Background())
 
-	query := fmt.Sprintf("INSERT INTO %s (name, isOccupied, lastUsed, busyUntil) VALUES ($1, $2, $3, $4)", unitTable)
-	row, err := tx.Exec(query, unit.Name, unit.IsOccupied, unit.LastUsed, unit.BusyUntil)
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-	unitId, err := row.LastInsertId()
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	query = fmt.Sprintf("INSERT INTO %s (group_id, unit_id) VALUES ($1, $2)", unitInGroupTable)
-	_, err = tx.Exec(query, groupId, unitId)
-	if err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	return int(unitId), tx.Commit()
+	return unit.Id, err
 }
 
 func (r *UnitSQLite) UpdateUnit(unitId int, input model.UpdateUnitInput) error {
@@ -110,6 +66,11 @@ func (r *UnitSQLite) UpdateUnit(unitId int, input model.UpdateUnitInput) error {
 	args := make([]interface{}, 0)
 	argId := 1
 
+	if input.UserId != nil {
+		setValues = append(setValues, fmt.Sprintf("user_id=$%d", argId))
+		args = append(args, *input.UserId)
+		argId++
+	}
 	if input.Name != nil {
 		setValues = append(setValues, fmt.Sprintf("name=$%d", argId))
 		args = append(args, *input.Name)
@@ -140,8 +101,10 @@ func (r *UnitSQLite) UpdateUnit(unitId int, input model.UpdateUnitInput) error {
 }
 
 func (r *UnitSQLite) DeleteUnit(unitId int) error {
-	query := fmt.Sprintf("DELETE FROM %s WHERE id = $1", unitTable)
-	_, err := r.db.Exec(query, unitId)
+	_, err := r.db.NewDelete().
+		Table(unitTable).
+		Where("id = ?", unitId).
+		Exec(context.Background())
 
 	return err
 }
@@ -149,13 +112,30 @@ func (r *UnitSQLite) DeleteUnit(unitId int) error {
 func (r *UnitSQLite) ReservedUnits(userId int) ([]model.StorageUnit, error) {
 	var units []model.StorageUnit
 
-	query := fmt.Sprintf(`
-		SELECT u.name, u.isOccupied, u.lastUsed, u.busyUntil
-		FROM %s u
-		INNER JOIN %s usu ON u.id=usu.unit_id
-		WHERE usu.user_id=$1`,
-		unitTable, userUnitsTable)
-	err := r.db.Get(&units, query, userId)
+	err := r.db.NewSelect().
+		Model(&units).
+		Join(fmt.Sprintf("INNER JOIN %s uu ON uu.unit_id = u.id", userUnitsTable)).
+		Where("uu.user_id = ?", userId).
+		Scan(context.Background())
 
 	return units, err
+}
+
+func (r *UnitSQLite) LogHistory(log model.UnitHistory) error {
+	_, err := r.db.NewInsert().
+		Model(&log).
+		Exec(context.Background())
+
+	return err
+}
+
+func (r *UnitSQLite) UnitHistory(unitId int) ([]model.UnitHistory, error) {
+	var logs []model.UnitHistory
+
+	err := r.db.NewSelect().
+		Model(&logs).
+		Where("unit_id = ?", unitId).
+		Scan(context.Background())
+
+	return logs, err
 }
