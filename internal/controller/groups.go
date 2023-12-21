@@ -19,7 +19,7 @@ func (h *Handler) spaceGroups(ctx *gin.Context) {
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("id"))
+	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
 		return
@@ -43,19 +43,13 @@ func (h *Handler) groupById(ctx *gin.Context) {
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
-		return
-	}
-
 	groupId, err := strconv.Atoi(ctx.Param("group_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
 		return
 	}
 
-	group, err := h.services.GroupById(spaceId, groupId)
+	group, err := h.services.GroupById(groupId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -73,7 +67,7 @@ func (h *Handler) createGroup(ctx *gin.Context) {
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("id"))
+	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
 		return
@@ -87,6 +81,64 @@ func (h *Handler) createGroup(ctx *gin.Context) {
 	}
 
 	err = h.services.CreateGroup(id, spaceId, group)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, statusResp{
+		Status: "OK",
+	})
+}
+
+func (h *Handler) deleteGroup(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	// spaceId, err := strconv.Atoi(ctx.Param("space_id"))
+	// if err != nil {
+	// 	newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
+	// 	return
+	// }
+
+	groupId, err := strconv.Atoi(ctx.Param("group_id"))
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
+		return
+	}
+
+	err = h.services.DeleteGroup(id, groupId)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	ctx.JSON(http.StatusOK, statusResp{
+		Status: "OK",
+	})
+}
+
+func (h *Handler) updateGroup(ctx *gin.Context) {
+	id, err := getUserId(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
+		return
+	}
+	groupId, err := strconv.Atoi(ctx.Param("group_id"))
+	if err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
+		return
+	}
+	var group model.UpdateGroupInput
+	if err := ctx.BindJSON(&group); err != nil {
+		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = h.services.UpdateGroup(id, groupId, group)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

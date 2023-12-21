@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if err := initConfig(); err != nil {
-		logrus.Fatalf("an error occured while initializing the config: %s", err)
+		logrus.Fatalf("an error occured while initializing the config: %s", err.Error())
 	}
 
 	db, err := repository.NewSQLiteDB()
@@ -24,7 +24,7 @@ func main() {
 
 	srv := new(model.Server)
 	if err := srv.Run(viper.GetString("port"), handler.InitRoutes()); err != nil {
-		logrus.Fatalf("an error occured while running the server: %s", err)
+		logrus.Fatalf("an error occured while running the server: %s", err.Error())
 	}
 
 }

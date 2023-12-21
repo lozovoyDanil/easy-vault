@@ -1,27 +1,80 @@
 package repository
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"main.go/internal/model"
 )
 
 type SpaceSQLite struct {
-	db *sqlx.DB
+	db *bun.DB
 }
 
-func NewSpaceSQLite(db *sqlx.DB) *SpaceSQLite {
+func NewSpaceSQLite(db *bun.DB) *SpaceSQLite {
 	return &SpaceSQLite{db: db}
 }
 
-func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {
-	var spaces []model.Space
+func (r *SpaceSQLite) SpaceBelongsToUser(userId, spaceId int) (int, error) {
+	var count int
 
-	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id", spaceTable, userSpacesTable)
-	err := r.db.Select(&spaces, query)
+	count, err := r.db.NewSelect().
+		Table(userSpacesTable).
+		Where("us.user_id = ? AND us.space_id = ?", userId, spaceId).
+		Count(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (r *SpaceSQLite) AllSpaces(filter model.SpaceFilter) ([]model.Space, error) {
+	var spaces []model.Space
+	filterValues := make([]string, 0)
+	args := make([]any, 0)
+	argId := 1
+
+	if filter.Name != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.name LIKE $%d", argId))
+		args = append(args, fmt.Sprintf("%%%s%%", *filter.Name))
+		argId++
+	}
+	if filter.Addr != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.addr LIKE $%d", argId))
+		args = append(args, fmt.Sprintf("%%%s%%", *filter.Addr))
+		argId++
+	}
+	if filter.MinSize != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.size >= $%d", argId))
+		args = append(args, *filter.MinSize)
+		argId++
+	}
+	if filter.MaxSize != nil {
+		filterValues = append(filterValues, fmt.Sprintf("s.size <= $%d", argId))
+		args = append(args, *filter.MaxSize)
+		argId++
+	}
+
+	filterQuery := strings.Join(filterValues, " AND ")
+	query := fmt.Sprintf("SELECT s.* FROM %s s WHERE 1=1%s", spaceTable, filterQuery)
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var space model.Space
+		err := rows.Scan(&space.Id, &space.Name, &space.Addr, &space.Size, &space.NumOfFree)
+		if err != nil {
+			return nil, err
+		}
+
+		spaces = append(spaces, space)
+	}
 
 	return spaces, err
 }
@@ -29,8 +82,11 @@ func (r *SpaceSQLite) AllSpaces() ([]model.Space, error) {
 func (r *SpaceSQLite) UserSpaces(id int) ([]model.Space, error) {
 	var spaces []model.Space
 
-	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id WHERE us.user_id=$1", spaceTable, userSpacesTable)
-	err := r.db.Select(&spaces, query, id)
+	err := r.db.NewSelect().
+		Model(&spaces).
+		Join(fmt.Sprintf("INNER JOIN %s us ON s.id=us.space_id", userSpacesTable)).
+		Where("us.user_id = ?", id).
+		Scan(context.Background())
 
 	return spaces, err
 }
@@ -38,8 +94,10 @@ func (r *SpaceSQLite) UserSpaces(id int) ([]model.Space, error) {
 func (r *SpaceSQLite) SpaceById(spaceId int) (model.Space, error) {
 	var space model.Space
 
-	query := fmt.Sprintf("SELECT s.id, s.name, s.addr, s.numOfGroups, s.size, s.numOfFree FROM %s s INNER JOIN %s us ON s.id=us.space_id WHERE us.space_id=$1", spaceTable, userSpacesTable)
-	err := r.db.Get(&space, query, spaceId)
+	err := r.db.NewSelect().
+		Model(&space).
+		Where("id = ?", spaceId).
+		Scan(context.Background())
 
 	return space, err
 }
@@ -50,25 +108,29 @@ func (r *SpaceSQLite) CreateSpace(userId int, space model.Space) (int, error) {
 		return 0, err
 	}
 
-	query := fmt.Sprintf("INSERT INTO %s(name, addr,numOfGroups, size, numOfFree) VALUES($1,$2,$3,$4,$5) RETURNING id", spaceTable)
-	row := tx.QueryRow(query, space.Name, space.Addr, space.NumOfGroups, space.Size, space.NumOfFree)
-	var id int
-	if err := row.Scan(&id); err != nil {
-		tx.Rollback()
-		return 0, err
-	}
-
-	query = fmt.Sprintf("INSERT INTO %s(user_id, space_id) VALUES($1, $2)", userSpacesTable)
-	_, err = tx.Exec(query, userId, id)
+	_, err = tx.NewInsert().
+		Model(&space).
+		Exec(context.Background())
 	if err != nil {
 		tx.Rollback()
 		return 0, err
 	}
 
-	return id, tx.Commit()
+	_, err = tx.NewInsert().
+		Model(&model.UserSpace{
+			UserId:  userId,
+			SpaceId: space.Id,
+		}).
+		Exec(context.Background())
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return space.Id, tx.Commit()
 }
 
-func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceInput) error {
+func (r *SpaceSQLite) UpdateSpace(spaceId int, input model.UpdateSpaceInput) error {
 	setValues := make([]string, 0)
 	args := make([]any, 0)
 	argId := 1
@@ -85,44 +147,19 @@ func (r *SpaceSQLite) UpdateSpace(userId, spaceId int, input model.UpdateSpaceIn
 	}
 
 	setQuery := strings.Join(setValues, ",")
-	query := fmt.Sprintf("UPDATE %s s SET %s FROM %s us WHERE s.id = us.space_id AND us.space_id = $%d AND us.user_id = $%d",
-		spaceTable, setQuery, userSpacesTable, argId, argId+1)
-	args = append(args, spaceId, userId)
+	query := fmt.Sprintf("UPDATE %s s SET %s FROM %s us WHERE s.id = us.space_id AND us.space_id = $%d",
+		spaceTable, setQuery, userSpacesTable, argId)
+	args = append(args, spaceId)
 	_, err := r.db.Exec(query, args...)
 
 	return err
-
 }
 
-func (r *SpaceSQLite) DeleteSpace(userId, spaceId int) error {
-	//* Starting transaction
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
-	}
+func (r *SpaceSQLite) DeleteSpace(spaceId int) error {
+	_, err := r.db.NewDelete().
+		Table(spaceTable).
+		Where("id = ?", spaceId).
+		Exec(context.Background())
 
-	query := fmt.Sprintf("DELETE FROM %s WHERE space_id=$1 AND user_id=$2", userSpacesTable)
-	res, err := tx.Exec(query, spaceId, userId)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	// If res.RowsAffected() returns 0, this means that eather
-	// space does not exist or user does not own it.
-	if r, _ := res.RowsAffected(); r == 0 {
-		tx.Rollback()
-		return errors.New("access forbiden or object does not exist")
-	}
-
-	query = fmt.Sprintf("DELETE FROM %s WHERE id = ?", spaceTable)
-	_, err = tx.Exec(query, spaceId)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	//! All the groups and units must be deleted too.
-	//TODO: Add calls to delete them, or implement them here.
-
-	return tx.Commit()
+	return err
 }

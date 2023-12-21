@@ -1,68 +1,108 @@
 package repository
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"strings"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/bun"
 	"main.go/internal/model"
 )
 
 type GroupSQLite struct {
-	db *sqlx.DB
+	db *bun.DB
 }
 
-func NewGroupSQLite(db *sqlx.DB) *GroupSQLite {
+func NewGroupSQLite(db *bun.DB) *GroupSQLite {
 	return &GroupSQLite{db: db}
+}
+
+func (r *GroupSQLite) GroupBelongsToUser(userId, groupId int) (int, error) {
+	var count int
+
+	count, err := r.db.NewSelect().
+		Table(groupTable).
+		Join(fmt.Sprintf("INNER JOIN %s s ON s.id=g.space_id", spaceTable)).
+		Join(fmt.Sprintf("INNER JOIN %s us ON s.id = us.space_id", userSpacesTable)).
+		Where("us.user_id = ? AND g.id = ?", userId, groupId).
+		Count(context.Background())
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (r *GroupSQLite) SpaceGroups(spaceId int) ([]model.StorageGroup, error) {
 	var groups []model.StorageGroup
 
-	query := fmt.Sprintf("SELECT g.id, g.name, g.size, g.numOfFree FROM '%s' g INNER JOIN %s sg ON g.id=sg.group_id INNER JOIN %s us ON sg.space_id=us.space_id WHERE us.space_id=$1",
-		groupTable, groupInSpaceTable, userSpacesTable)
-	err := r.db.Select(&groups, query, spaceId)
+	err := r.db.NewSelect().
+		Model(&groups).
+		Join(fmt.Sprintf("INNER JOIN %s s ON s.id=g.space_id", spaceTable)).
+		Where("s.id = ?", spaceId).
+		Scan(context.Background())
 
 	return groups, err
 
 }
 
-func (r *GroupSQLite) GroupById(spaceId, groupId int) (model.StorageGroup, error) {
+func (r *GroupSQLite) GroupById(groupId int) (model.StorageGroup, error) {
 	var group model.StorageGroup
 
-	query := fmt.Sprintf("SELECT g.id, g.name, g.size, g.numOfFree FROM '%s' g INNER JOIN %s sg ON g.id=sg.group_id INNER JOIN %s us ON sg.space_id=us.space_id WHERE us.space_id=$1 AND g.id=$2",
-		groupTable, groupInSpaceTable, userSpacesTable)
-	err := r.db.Select(&group, query, spaceId, groupId)
+	err := r.db.NewSelect().
+		Model(&group).
+		Where("g.id = ?", groupId).
+		Scan(context.Background())
 
 	return group, err
 }
 
-func (r *GroupSQLite) CreateGroup(userId, spaceId int, group model.StorageGroup) error {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return err
+func (r *GroupSQLite) CreateGroup(group model.StorageGroup) error {
+	_, err := r.db.NewInsert().
+		Model(&group).
+		Exec(context.Background())
+
+	return err
+}
+
+func (r *GroupSQLite) UpdateGroup(groupId int, input model.UpdateGroupInput) error {
+	setValues := make([]string, 0)
+	args := make([]any, 0)
+	argId := 1
+
+	if input.Name != nil {
+		setValues = append(setValues, fmt.Sprintf("name=$%d", argId))
+		args = append(args, *input.Name)
+		argId++
 	}
 
-	query := fmt.Sprintf("INSERT INTO %s g(name) VALUES($1, $2, $3) RETURNING id", groupTable)
-	row := tx.QueryRow(query, group.Name, group.Size, group.NumOfFree)
-	var groupId int
-	if err := row.Scan(&groupId); err != nil {
-		tx.Rollback()
-		return err
+	if input.Price != nil {
+		setValues = append(setValues, fmt.Sprintf("price=$%d", argId))
+		args = append(args, *input.Price)
+		argId++
 	}
 
-	query = fmt.Sprintf("INSERT INTO %s(space_id, group_id) SELECT space_id, $1 as group_id FROM User_Spaces WHERE space_id=$2 AND user_id=$3", groupInSpaceTable)
-	res, err := tx.Exec(query, groupId, spaceId, userId)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	// If res.RowsAffected() returns 0, this means that eather
-	// space does not exist or user does not own it.
-	if r, _ := res.RowsAffected(); r == 0 {
-		tx.Rollback()
-		return errors.New("access forbiden or object does not exist")
+	if input.PricePer != nil {
+		setValues = append(setValues, fmt.Sprintf("pricePer=$%d", argId))
+		args = append(args, *input.PricePer)
+		argId++
 	}
 
-	return tx.Commit()
+	setQuery := strings.Join(setValues, ",")
+	query := fmt.Sprintf("UPDATE %s g SET %s WHERE g.id=$%d",
+		groupTable, setQuery, argId)
+	args = append(args, groupId)
+	_, err := r.db.Exec(query, args...)
+
+	return err
+
+}
+
+func (r *GroupSQLite) DeleteGroup(groupId int) error {
+	_, err := r.db.NewDelete().
+		Table(groupTable).
+		Where("id = ?", groupId).
+		Exec(context.Background())
+
+	return err
 }

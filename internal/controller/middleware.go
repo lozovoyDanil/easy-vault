@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"main.go/internal/model"
 )
 
 const (
@@ -13,8 +14,9 @@ const (
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrWrongIdType  = errors.New("wrong user id type")
+	ErrUserNotFound  = errors.New("user not found")
+	ErrWrongIdType   = errors.New("wrong user id type")
+	ErrWrongRoleType = errors.New("wrong user role type")
 )
 
 func (h *Handler) userIdentity(ctx *gin.Context) {
@@ -30,27 +32,98 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 		return
 	}
 
-	userId, err := h.services.Authorization.ParseToken(headerParts[1])
+	user, err := h.services.Authorization.ParseToken(headerParts[1])
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	ctx.Set("userId", userId)
+	ctx.Set("userId", user.Id)
+	ctx.Set("userRole", user.Role)
+	ctx.Set("userIdentity", user)
+}
+
+func (h *Handler) adminAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if errors.Is(err, ErrWrongRoleType) {
+		newErrorResponse(ctx, http.StatusInternalServerError, ErrWrongRoleType.Error())
+		return
+	}
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != model.AdminRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not admin")
+		return
+	}
+}
+
+func (h *Handler) managerAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != model.ManagerRole && role != model.AdminRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not manager")
+		return
+	}
+}
+
+func (h *Handler) customerAccess(ctx *gin.Context) {
+	role, err := getUserRole(ctx)
+	if err != nil {
+		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if role != model.CustomerRole && role != model.AdminRole {
+		newErrorResponse(ctx, http.StatusForbidden, "user is not customer")
+		return
+	}
 }
 
 func getUserId(ctx *gin.Context) (int, error) {
 	id, ok := ctx.Get("userId")
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "user not found")
 		return 0, ErrUserNotFound
 	}
 
 	idInt, ok := id.(int)
 	if !ok {
-		newErrorResponse(ctx, http.StatusInternalServerError, "wrong user id type")
 		return 0, ErrWrongIdType
 	}
 
 	return idInt, nil
+}
+
+func getUserRole(ctx *gin.Context) (string, error) {
+	role, ok := ctx.Get("userRole")
+	if !ok {
+		return "", ErrUserNotFound
+	}
+
+	roleStr, ok := role.(string)
+	if !ok {
+		return "", ErrWrongRoleType
+	}
+
+	return roleStr, nil
+}
+
+func getUserIdentity(ctx *gin.Context) (*model.UserIdentity, error) {
+	identity, ok := ctx.Get("userIdentity")
+	if !ok {
+		return nil, ErrUserNotFound
+	}
+
+	identityUser, ok := identity.(*model.UserIdentity)
+	if !ok {
+		return nil, ErrWrongRoleType
+	}
+
+	return identityUser, nil
 }
