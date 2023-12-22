@@ -3,6 +3,7 @@ package service
 import (
 	"time"
 
+	"github.com/sirupsen/logrus"
 	m "main.go/internal/model"
 	"main.go/internal/repository"
 )
@@ -59,12 +60,14 @@ func (s *UnitService) UnitById(userId, unitId int) (m.StorageUnit, error) {
 }
 
 func (s *UnitService) CreateUnit(user m.UserIdentity, groupId int, unit m.StorageUnit) (int, error) {
+	logrus.Error("CreateUnit")
 	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
 		s.LogHistory(user.Id, groupId, StatusForbidden, UnitCreateAction)
 		return 0, ErrOwnershipViolation
 	}
 
 	unit.GroupId = groupId
+	unit.IsOccupied = false
 
 	return s.Unit.CreateUnit(unit)
 }

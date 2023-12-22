@@ -1,7 +1,7 @@
 package service
 
 import (
-	"main.go/internal/model"
+	m "main.go/internal/model"
 	"main.go/internal/repository"
 )
 
@@ -13,40 +13,32 @@ func NewSpaceService(repo repository.Space) *SpaceService {
 	return &SpaceService{repo: repo}
 }
 
-func (s *SpaceService) AllSpaces(filter model.SpaceFilter) ([]model.Space, error) {
+func (s *SpaceService) AllSpaces(filter m.SpaceFilter) ([]m.Space, error) {
 	return s.repo.AllSpaces(filter)
 }
 
-func (s *SpaceService) UserSpaces(id int) ([]model.Space, error) {
+func (s *SpaceService) UserSpaces(id int) ([]m.Space, error) {
 	return s.repo.UserSpaces(id)
 }
 
-func (s *SpaceService) SpaceById(spaceId int) (model.Space, error) {
+func (s *SpaceService) SpaceById(spaceId int) (m.Space, error) {
 	return s.repo.SpaceById(spaceId)
 }
 
-func (s *SpaceService) CreateSpace(userId int, space model.Space) (int, error) {
+func (s *SpaceService) CreateSpace(userId int, space m.Space) (int, error) {
 	return s.repo.CreateSpace(userId, space)
 }
 
-func (s *SpaceService) UpdateSpace(userId, spaceId int, space model.UpdateSpaceInput) error {
-	count, err := s.repo.SpaceBelongsToUser(userId, spaceId)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
+func (s *SpaceService) UpdateSpace(user m.UserIdentity, spaceId int, space m.SpaceInput) error {
+	if !s.repo.ManagerOwnsSpace(user.Id, spaceId) && user.Role != m.AdminRole {
 		return ErrOwnershipViolation
 	}
 
 	return s.repo.UpdateSpace(spaceId, space)
 }
 
-func (s *SpaceService) DeleteSpace(userId, spaceId int) error {
-	count, err := s.repo.SpaceBelongsToUser(userId, spaceId)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
+func (s *SpaceService) DeleteSpace(user m.UserIdentity, spaceId int) error {
+	if !s.repo.ManagerOwnsSpace(user.Id, spaceId) && user.Role != m.AdminRole {
 		return ErrOwnershipViolation
 	}
 

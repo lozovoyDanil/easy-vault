@@ -56,6 +56,7 @@ func (r *AuthSQLite) UserInfo(userId int) (model.User, error) {
 
 	err := r.db.NewSelect().
 		Model(&user).
+		Column("id", "fullName", "email", "role", "isBanned").
 		Where("id = ?", userId).
 		Scan(context.Background())
 

@@ -19,7 +19,7 @@ func (h *Handler) spaceGroups(ctx *gin.Context) {
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
+	spaceId, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
 		return
@@ -61,13 +61,13 @@ func (h *Handler) groupById(ctx *gin.Context) {
 }
 
 func (h *Handler) createGroup(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
+	spaceId, err := strconv.Atoi(ctx.Query("space_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid space id")
 		return
@@ -80,7 +80,7 @@ func (h *Handler) createGroup(ctx *gin.Context) {
 		return
 	}
 
-	err = h.services.CreateGroup(id, spaceId, group)
+	err = h.services.CreateGroup(*user, spaceId, group)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -92,7 +92,7 @@ func (h *Handler) createGroup(ctx *gin.Context) {
 }
 
 func (h *Handler) deleteGroup(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -110,7 +110,7 @@ func (h *Handler) deleteGroup(ctx *gin.Context) {
 		return
 	}
 
-	err = h.services.DeleteGroup(id, groupId)
+	err = h.services.DeleteGroup(*user, groupId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -122,7 +122,7 @@ func (h *Handler) deleteGroup(ctx *gin.Context) {
 }
 
 func (h *Handler) updateGroup(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -132,13 +132,18 @@ func (h *Handler) updateGroup(ctx *gin.Context) {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
 		return
 	}
-	var group model.UpdateGroupInput
-	if err := ctx.BindJSON(&group); err != nil {
+
+	var group model.GroupInput
+	if err := ctx.ShouldBindJSON(&group); err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
+	if group == (model.GroupInput{}) {
+		newErrorResponse(ctx, http.StatusBadRequest, "wrong input: group")
+		return
+	}
 
-	err = h.services.UpdateGroup(id, groupId, group)
+	err = h.services.UpdateGroup(*user, groupId, group)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

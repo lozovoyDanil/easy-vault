@@ -115,15 +115,20 @@ func getUserRole(ctx *gin.Context) (string, error) {
 }
 
 func getUserIdentity(ctx *gin.Context) (*model.UserIdentity, error) {
-	identity, ok := ctx.Get("userIdentity")
-	if !ok {
-		return nil, ErrUserNotFound
+	id, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	identityUser, ok := identity.(*model.UserIdentity)
-	if !ok {
-		return nil, ErrWrongRoleType
+	role, err := getUserRole(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return identityUser, nil
+	identity := &model.UserIdentity{
+		Id:   id,
+		Role: role,
+	}
+
+	return identity, nil
 }

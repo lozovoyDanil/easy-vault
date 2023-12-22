@@ -16,7 +16,7 @@ type unitsResponse struct {
 }
 
 func (h *Handler) groupUnits(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -28,7 +28,7 @@ func (h *Handler) groupUnits(ctx *gin.Context) {
 		return
 	}
 
-	units, err := h.services.GroupUnits(id, groupId)
+	units, err := h.services.GroupUnits(*user, groupId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -64,7 +64,7 @@ func (h *Handler) unitById(ctx *gin.Context) {
 }
 
 func (h *Handler) createUnit(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -82,7 +82,7 @@ func (h *Handler) createUnit(ctx *gin.Context) {
 		return
 	}
 
-	unitId, err := h.services.CreateUnit(id, groupId, input)
+	unitId, err := h.services.CreateUnit(*user, groupId, input)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -95,7 +95,7 @@ func (h *Handler) createUnit(ctx *gin.Context) {
 }
 
 func (h *Handler) updateUnit(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -107,13 +107,13 @@ func (h *Handler) updateUnit(ctx *gin.Context) {
 		return
 	}
 
-	var input model.UpdateUnitInput
+	var input model.UnitInput
 	if err := ctx.BindJSON(&input); err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = h.services.UpdateUnit(id, unitId, input)
+	err = h.services.UpdateUnit(*user, unitId, input)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -125,7 +125,7 @@ func (h *Handler) updateUnit(ctx *gin.Context) {
 }
 
 func (h *Handler) deleteUnit(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
@@ -137,7 +137,7 @@ func (h *Handler) deleteUnit(ctx *gin.Context) {
 		return
 	}
 
-	err = h.services.DeleteUnit(id, unitId)
+	err = h.services.DeleteUnit(*user, unitId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -167,11 +167,6 @@ func (h *Handler) reservedUnits(ctx *gin.Context) {
 }
 
 func (h *Handler) unitDetails(ctx *gin.Context) {
-	// id, err := getUserId(ctx)
-	// if err != nil {
-	// 	newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
-	// 	return
-	// }
 	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
@@ -210,7 +205,7 @@ func (h *Handler) reserveUnit(ctx *gin.Context) {
 		return
 	}
 
-	var reservInfo model.UpdateUnitInput
+	var reservInfo model.UnitInput
 	if err := ctx.BindJSON(&reservInfo); err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
@@ -225,9 +220,6 @@ func (h *Handler) reserveUnit(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, statusResp{
 		Status: "OK",
 	})
-}
-
-func (h *Handler) extendReserv(ctx *gin.Context) {
 }
 
 func (h *Handler) cancelReserv(ctx *gin.Context) {

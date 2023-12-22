@@ -25,7 +25,7 @@ func (h *Handler) allUsers(ctx *gin.Context) {
 }
 
 func (h *Handler) userById(ctx *gin.Context) {
-	userId, err := strconv.Atoi(ctx.Query("id"))
+	userId, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return

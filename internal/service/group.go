@@ -27,16 +27,13 @@ func (s *GroupService) GroupById(groupId int) (m.StorageGroup, error) {
 }
 
 func (s *GroupService) CreateGroup(user m.UserIdentity, spaceId int, group m.StorageGroup) error {
-	count, err := s.Space.SpaceBelongsToUser(user.Id, spaceId)
-	if err != nil {
-		return err
-	}
-	if count == 0 {
+	if !s.Space.ManagerOwnsSpace(user.Id, spaceId) && user.Role != m.AdminRole {
 		return ErrOwnershipViolation
 	}
 
 	group.Size = 0
-	group.NumOfFree = 0
+	group.NumOfFree = group.Size
+	group.SpaceId = spaceId
 
 	return s.Group.CreateGroup(group)
 }

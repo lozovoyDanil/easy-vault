@@ -53,14 +53,14 @@ type Group interface {
 }
 
 type Space interface {
-	SpaceBelongsToUser(userId, spaceId int) (int, error)
+	ManagerOwnsSpace(userId, spaceId int) bool
 
 	AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)
 
 	UserSpaces(id int) ([]model.Space, error)
 	CreateSpace(userId int, space model.Space) (int, error)
-	UpdateSpace(spaceId int, input model.UpdateSpaceInput) error
+	UpdateSpace(spaceId int, input model.SpaceInput) error
 	DeleteSpace(spaceId int) error
 }
 

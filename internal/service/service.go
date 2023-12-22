@@ -40,8 +40,8 @@ type Space interface {
 	UserSpaces(id int) ([]m.Space, error)
 	SpaceById(spaceId int) (m.Space, error)
 	CreateSpace(userId int, space m.Space) (int, error)
-	UpdateSpace(userId, spaceId int, space m.UpdateSpaceInput) error
-	DeleteSpace(userId, spaceId int) error
+	UpdateSpace(user m.UserIdentity, spaceId int, space m.SpaceInput) error
+	DeleteSpace(user m.UserIdentity, spaceId int) error
 }
 
 type Group interface {

@@ -12,7 +12,7 @@ const (
 	userTable        = "User"
 	userUnitsTable   = "User_Units"
 	unitTable        = "Unit"
-	groupTable       = "Group"
+	groupTable       = "StorageGroup"
 	spaceTable       = "Space"
 	userSpacesTable  = "User_Spaces"
 	unitHistoryTable = "Unit_History"

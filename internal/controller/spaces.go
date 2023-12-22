@@ -104,26 +104,26 @@ func (h *Handler) createSpace(ctx *gin.Context) {
 }
 
 func (h *Handler) updateSpace(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	spaceId, err := strconv.Atoi(ctx.Param("id"))
+	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid param: id")
 		return
 	}
 
-	var space model.UpdateSpaceInput
+	var space model.SpaceInput
 	err = ctx.BindJSON(&space)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err = h.services.UpdateSpace(id, spaceId, space)
+	err = h.services.UpdateSpace(*user, spaceId, space)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return
@@ -135,20 +135,19 @@ func (h *Handler) updateSpace(ctx *gin.Context) {
 }
 
 func (h *Handler) deleteSpace(ctx *gin.Context) {
-	id, err := getUserId(ctx)
+	user, err := getUserIdentity(ctx)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
 		return
 	}
 
-	var spaceId int
-	err = ctx.BindJSON(&spaceId)
+	spaceId, err := strconv.Atoi(ctx.Param("space_id"))
 	if err != nil {
-		newErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		newErrorResponse(ctx, http.StatusBadRequest, "invalid param: id")
 		return
 	}
 
-	err = h.services.DeleteSpace(id, spaceId)
+	err = h.services.DeleteSpace(*user, spaceId)
 	if err != nil {
 		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
 		return

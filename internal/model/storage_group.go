@@ -3,7 +3,7 @@ package model
 import "github.com/uptrace/bun"
 
 type StorageGroup struct {
-	bun.BaseModel `bun:"table:Group,alias:g"`
+	bun.BaseModel `bun:"table:StorageGroup,alias:g"`
 
 	Id        int    `bun:"id,pk,autoincrement"`
 	SpaceId   int    `bun:"space_id"`
@@ -11,7 +11,7 @@ type StorageGroup struct {
 	Size      int    `json:"size"`
 	NumOfFree int    `json:"numOfFree" bun:"numOfFree"`
 	Price     int    `json:"price" bun:"price"`
-	PricePer  int    `json:"pricePer" bun:"pricePer"`
+	PricePer  string `json:"pricePer" bun:"pricePer"`
 }
 
 type GroupInput struct {
