@@ -23,7 +23,7 @@ func (r *GroupSQLite) ManagerOwnsGroup(managerId, groupId int) bool {
 	count, err := r.db.NewSelect().
 		Model(&model.StorageGroup{}).
 		Join(fmt.Sprintf("INNER JOIN %s s ON s.id=g.space_id", spaceTable)).
-		Join(fmt.Sprintf("INNER JOIN %s us ON us.id=s.manager_id", userSpacesTable)).
+		Join(fmt.Sprintf("INNER JOIN %s us ON us.space_id=s.id", userSpacesTable)).
 		Where("g.id = ? AND us.user_id = ?", groupId, managerId).
 		Count(context.Background())
 

@@ -10,12 +10,12 @@ import (
 
 func main() {
 	// if err := initConfig(); err != nil {
-	// 	logrus.Fatalf("an error occured while initializing the config: %s", err.Error())
+	// 	logrus.Fatalf("an error occurred while initializing the config: %s", err.Error())
 	// }
 
 	db, err := repository.NewSQLiteDB()
 	if err != nil {
-		logrus.Fatalf("an error occured while opening db: %s", err.Error())
+		logrus.Fatalf("an error occurred while opening db: %s", err.Error())
 	}
 	repo := repository.NewRepository(db)
 	services := service.NewServices(repo)
@@ -23,7 +23,7 @@ func main() {
 
 	srv := new(model.Server)
 	if err := srv.Run("5060", handler.InitRoutes()); err != nil {
-		logrus.Fatalf("an error occured while running the server: %s", err.Error())
+		logrus.Fatalf("an error occurred while running the server: %s", err.Error())
 	}
 
 }

@@ -22,7 +22,7 @@ func (h *Handler) groupUnits(ctx *gin.Context) {
 		return
 	}
 
-	groupId, err := strconv.Atoi(ctx.Param("group_id"))
+	groupId, err := strconv.Atoi(ctx.Query("group_id"))
 	if err != nil {
 		newErrorResponse(ctx, http.StatusBadRequest, "invalid group id")
 		return

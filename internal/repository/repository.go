@@ -37,7 +37,7 @@ type Unit interface {
 	DeleteUnit(unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
-	ReserveUnit(userId, unitId int, reservInfo model.UnitInput) error
+	// ReserveUnit(userId, unitId int, reservInfo model.UnitInput) error
 	LogHistory(log model.UnitHistory) error
 	UnitHistory(unitId int) ([]model.UnitHistory, error)
 }
@@ -77,8 +77,8 @@ func NewRepository(db *bun.DB) *Repository {
 	return &Repository{
 		Admin:         NewAdminSQLite(db),
 		Authorization: NewAuthSQLite(db),
-		// Unit:          NewUnitSQLite(db),
-		Group: NewGroupSQLite(db),
-		Space: NewSpaceSQLite(db),
+		Unit:          NewUnitSQLite(db),
+		Group:         NewGroupSQLite(db),
+		Space:         NewSpaceSQLite(db),
 	}
 }

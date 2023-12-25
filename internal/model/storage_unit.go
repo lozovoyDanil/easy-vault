@@ -1,8 +1,6 @@
 package model
 
 import (
-	"time"
-
 	"github.com/uptrace/bun"
 )
 
@@ -19,11 +17,11 @@ type StorageUnit struct {
 }
 
 type UnitInput struct {
-	UserId     *int       `json:"userId"`
-	Name       *string    `json:"name"`
-	IsOccupied *bool      `json:"isOccupied"`
-	LastUsed   *time.Time `json:"lastUsed"`
-	BusyUntil  *time.Time `json:"busyUntil"`
+	UserId     *int    `json:"userId"`
+	Name       *string `json:"name"`
+	IsOccupied *bool   `json:"isOccupied"`
+	LastUsed   *string `json:"lastUsed"`
+	BusyUntil  *string `json:"busyUntil"`
 }
 
 type UnitDetails struct {

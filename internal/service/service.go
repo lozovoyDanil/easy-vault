@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrOwnershipViolation = errors.New("access forbiden or obj does not exist")
+	ErrOwnershipViolation = errors.New("access forbidden or obj does not exist")
 	//ERROR: user already banned.
 	ErrUserAlreadyBanned = errors.New("user already banned")
 	//ERROR: cannot delete user.

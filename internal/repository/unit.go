@@ -17,7 +17,7 @@ func NewUnitSQLite(db *bun.DB) *UnitSQLite {
 	return &UnitSQLite{db: db}
 }
 
-func (r *UnitSQLite) UserOwnerId(unitId int) (int, error) {
+func (r *UnitSQLite) UnitOwnerId(unitId int) (int, error) {
 	var id int
 
 	err := r.db.NewSelect().
@@ -81,33 +81,33 @@ func (r *UnitSQLite) UpdateUnit(unitId int, input model.UnitInput) error {
 	argId := 1
 
 	if input.UserId != nil {
-		setValues = append(setValues, fmt.Sprintf("user_id=$%d", argId))
+		setValues = append(setValues, "user_id=?")
 		args = append(args, *input.UserId)
 		argId++
 	}
 	if input.Name != nil {
-		setValues = append(setValues, fmt.Sprintf("name=$%d", argId))
+		setValues = append(setValues, "name=?")
 		args = append(args, *input.Name)
 		argId++
 	}
 	if input.IsOccupied != nil {
-		setValues = append(setValues, fmt.Sprintf("isOccupied=$%d", argId))
+		setValues = append(setValues, "isOccupied=?")
 		args = append(args, *input.IsOccupied)
 		argId++
 	}
 	if input.LastUsed != nil {
-		setValues = append(setValues, fmt.Sprintf("lastUsed=$%d", argId))
+		setValues = append(setValues, "lastUsed=?")
 		args = append(args, *input.LastUsed)
 		argId++
 	}
 	if input.BusyUntil != nil {
-		setValues = append(setValues, fmt.Sprintf("busyUntil=$%d", argId))
+		setValues = append(setValues, "busyUntil=?")
 		args = append(args, *input.BusyUntil)
 		argId++
 	}
 
 	setQuery := strings.Join(setValues, ",")
-	query := fmt.Sprintf("UPDATE %s u SET %s WHERE u.id=$%d", unitTable, setQuery, argId)
+	query := fmt.Sprintf("UPDATE %s AS u SET %s WHERE u.id=?", unitTable, setQuery)
 	args = append(args, unitId)
 	_, err := r.db.Exec(query, args...)
 
@@ -128,8 +128,7 @@ func (r *UnitSQLite) ReservedUnits(userId int) ([]model.StorageUnit, error) {
 
 	err := r.db.NewSelect().
 		Model(&units).
-		Join(fmt.Sprintf("INNER JOIN %s uu ON uu.unit_id = u.id", userUnitsTable)).
-		Where("uu.user_id = ?", userId).
+		Where("u.user_id = ?", userId).
 		Scan(context.Background())
 
 	return units, err
