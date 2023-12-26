@@ -16,12 +16,20 @@ var (
 	ErrCannotDeleteUser = errors.New("cannot delete user")
 	//ERROR: user tries to create new partnership, but he already has one.
 	ErrPartnershipViolation = errors.New("user already has partnership")
-	//ERROR: user tries to update partnership tier to the same or lower.
-	ErrTierViolation = errors.New("cannot update partnership tier to the same or lower")
+	//ERROR: user tries to create new space, unit or calculate revenue,
+	//but his partnership tier does not allow this action.
+	ErrTierViolation = errors.New("your partnership tier does not allow this action")
 	//ERROR: user has reached limit of spaces for his partnership tier.
 	ErrSpacesLimitReached = errors.New("cannot create more spaces, try to upgrade your partnership tier")
 	//ERROR: user has reached limit of units for his partnership tier.
 	ErrUnitsLimitReached = errors.New("cannot create more units, try to upgrade your partnership tier")
+)
+
+// Partnership tiers.
+const (
+	FreeTier = iota
+	ProTier
+	EnterpriseTier
 )
 
 type Admin interface {
@@ -42,6 +50,10 @@ type Partnership interface {
 	PartByUserId(id int) (m.Partnership, error)
 	CreatePart(userId, tier int) error
 	UpdatePart(userId, tier int) error
+}
+
+type Revenue interface {
+	ManagerRevenue(userId int) (m.Revenue, error)
 }
 
 type Space interface {
@@ -74,9 +86,10 @@ type Service struct {
 	Admin
 	Authorization
 	Partnership
-	Unit
-	Group
+	Revenue
 	Space
+	Group
+	Unit
 }
 
 func NewServices(repo *repository.Repository) *Service {
@@ -84,8 +97,9 @@ func NewServices(repo *repository.Repository) *Service {
 		Admin:         NewAdminService(repo),
 		Authorization: NewAuthService(repo),
 		Partnership:   NewPartService(repo),
-		Unit:          NewUnitService(repo),
-		Group:         NewGroupService(repo),
+		Revenue:       NewRevenueService(repo),
 		Space:         NewSpaceService(repo),
+		Group:         NewGroupService(repo),
+		Unit:          NewUnitService(repo),
 	}
 }

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/uptrace/bun"
 	"main.go/internal/model"
@@ -22,6 +24,9 @@ func (r *PartSQLite) PartByUserId(id int) (model.Partnership, error) {
 		Model(&part).
 		Where("user_id = ?", id).
 		Scan(context.Background())
+	if errors.Is(err, sql.ErrNoRows) {
+		return part, nil
+	}
 
 	return part, err
 }

@@ -16,8 +16,6 @@ func NewHandler(services *service.Service) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	// router.LoadHTMLGlob("./templates/*")
-
 	auth := router.Group("/auth")
 	{
 		auth.POST("/sign-up", h.signUp)
@@ -81,6 +79,11 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				part.GET("/", h.managerPart)
 				part.POST("/:tier", h.createPart)
 				part.PUT("/", h.updatePart)
+			}
+
+			revenue := manager.Group("/revenue")
+			{
+				revenue.GET("/", h.managerRevenue)
 			}
 		}
 
