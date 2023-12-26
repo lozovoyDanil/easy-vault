@@ -86,7 +86,7 @@ func (h *Handler) editUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }

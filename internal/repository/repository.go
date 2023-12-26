@@ -20,15 +20,16 @@ type Authorization interface {
 	UserIsBanned(userId int) (bool, error)
 }
 
-type Subscription interface {
-	SubByUserId(id int) (model.Subscription, error)
-	CreateSub(model.Subscription) error
-	UpdateSub(model.Subscription) error
+type Partnership interface {
+	PartByUserId(id int) (model.Partnership, error)
+	CreatePart(model.Partnership) error
+	UpdatePart(model.Partnership) error
 }
 
 type Unit interface {
 	UnitOwnerId(unitId int) (int, error)
 	ManagerOwnsUnit(managerId, unitId int) bool
+	ManagerUnitsCount(managerId int) (int, error)
 
 	GroupUnits(groupId int) ([]model.StorageUnit, error)
 	UnitById(unitId int) (model.StorageUnit, error)
@@ -37,7 +38,6 @@ type Unit interface {
 	DeleteUnit(unitId int) error
 
 	ReservedUnits(userId int) ([]model.StorageUnit, error)
-	// ReserveUnit(userId, unitId int, reservInfo model.UnitInput) error
 	LogHistory(log model.UnitHistory) error
 	UnitHistory(unitId int) ([]model.UnitHistory, error)
 }
@@ -54,6 +54,7 @@ type Group interface {
 
 type Space interface {
 	ManagerOwnsSpace(userId, spaceId int) bool
+	ManagerSpacesCount(userId int) (int, error)
 
 	AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
 	SpaceById(spaceId int) (model.Space, error)
@@ -67,7 +68,7 @@ type Space interface {
 type Repository struct {
 	Admin
 	Authorization
-	Subscription
+	Partnership
 	Unit
 	Group
 	Space
@@ -77,6 +78,7 @@ func NewRepository(db *bun.DB) *Repository {
 	return &Repository{
 		Admin:         NewAdminSQLite(db),
 		Authorization: NewAuthSQLite(db),
+		Partnership:   NewPartSQLite(db),
 		Unit:          NewUnitSQLite(db),
 		Group:         NewGroupSQLite(db),
 		Space:         NewSpaceSQLite(db),

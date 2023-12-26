@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"main.go/internal/controller"
 	"main.go/internal/model"
 	"main.go/internal/repository"
@@ -9,9 +11,9 @@ import (
 )
 
 func main() {
-	// if err := initConfig(); err != nil {
-	// 	logrus.Fatalf("an error occurred while initializing the config: %s", err.Error())
-	// }
+	if err := initConfig(); err != nil {
+		logrus.Fatalf("an error occurred while initializing the config: %s", err.Error())
+	}
 
 	db, err := repository.NewSQLiteDB()
 	if err != nil {
@@ -22,14 +24,14 @@ func main() {
 	handler := controller.NewHandler(services)
 
 	srv := new(model.Server)
-	if err := srv.Run("5060", handler.InitRoutes()); err != nil {
+	if err := srv.Run(viper.GetString("port"), handler.InitRoutes()); err != nil {
 		logrus.Fatalf("an error occurred while running the server: %s", err.Error())
 	}
 
 }
 
-// func initConfig() error {
-// 	viper.AddConfigPath("configs")
-// 	viper.SetConfigName("config")
-// 	return viper.ReadInConfig()
-// }
+func initConfig() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
+}

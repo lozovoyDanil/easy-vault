@@ -45,6 +45,21 @@ func (r *UnitSQLite) ManagerOwnsUnit(userId, unitId int) bool {
 	return count > 0 && err == nil
 }
 
+func (r *UnitSQLite) ManagerUnitsCount(userId int) (int, error) {
+	var count int
+
+	count, err := r.db.NewSelect().
+		Table(unitTable).
+		ColumnExpr("u.id").
+		Join(fmt.Sprintf("INNER JOIN %s g ON g.id = u.group_id", groupTable)).
+		Join(fmt.Sprintf("INNER JOIN %s s ON s.id = g.space_id", spaceTable)).
+		Join(fmt.Sprintf("INNER JOIN %s us ON us.space_id = s.id", userSpacesTable)).
+		Where("us.user_id = ?", userId).
+		Count(context.Background())
+
+	return count, err
+}
+
 func (r *UnitSQLite) GroupUnits(groupId int) ([]model.StorageUnit, error) {
 	var units []model.StorageUnit
 

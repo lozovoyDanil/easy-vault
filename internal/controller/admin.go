@@ -55,7 +55,7 @@ func (h *Handler) banUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }
@@ -73,7 +73,7 @@ func (h *Handler) deleteUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }

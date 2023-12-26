@@ -39,30 +39,6 @@ func (h *Handler) groupUnits(ctx *gin.Context) {
 	})
 }
 
-func (h *Handler) unitById(ctx *gin.Context) {
-	id, err := getUserId(ctx)
-	if err != nil {
-		newErrorResponse(ctx, http.StatusUnauthorized, err.Error())
-		return
-	}
-
-	unitId, err := strconv.Atoi(ctx.Param("unit_id"))
-	if err != nil {
-		newErrorResponse(ctx, http.StatusBadRequest, "invalid unit id")
-		return
-	}
-
-	unit, err := h.services.UnitById(id, unitId)
-	if err != nil {
-		newErrorResponse(ctx, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	ctx.JSON(http.StatusOK, unitsResponse{
-		Data: []model.StorageUnit{unit},
-	})
-}
-
 func (h *Handler) createUnit(ctx *gin.Context) {
 	user, err := getUserIdentity(ctx)
 	if err != nil {
@@ -119,7 +95,7 @@ func (h *Handler) updateUnit(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }
@@ -143,7 +119,7 @@ func (h *Handler) deleteUnit(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }
@@ -217,12 +193,12 @@ func (h *Handler) reserveUnit(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, statusResp{
+	ctx.JSON(http.StatusOK, statusResponse{
 		Status: "OK",
 	})
 }
 
-func (h *Handler) cancelReserv(ctx *gin.Context) {
+func (h *Handler) cancelReservation(ctx *gin.Context) {
 
 }
 

@@ -24,16 +24,27 @@ const (
 	StatusForbidden
 )
 
+// Limits for partnership tiers.
+var UnitsPlanLimits = map[int]int{
+	//Free tier.
+	0: 25,
+	//Pro tier.
+	1: 100,
+	//Enterprise tier.
+	2: 32768,
+}
+
 type UnitService struct {
 	repository.Unit
-	//* Необходима для проверки принадлежности Group пользователю
 	repository.Group
+	repository.Partnership
 }
 
 func NewUnitService(repo *repository.Repository) *UnitService {
 	return &UnitService{
-		Unit:  repo.Unit,
-		Group: repo.Group,
+		Unit:        repo.Unit,
+		Group:       repo.Group,
+		Partnership: repo.Partnership,
 	}
 }
 
@@ -45,20 +56,12 @@ func (s *UnitService) GroupUnits(user m.UserIdentity, groupId int) ([]m.StorageU
 	return s.Unit.GroupUnits(groupId)
 }
 
-// TODO: delete this function, use unitdetails instead
-func (s *UnitService) UnitById(userId, unitId int) (m.StorageUnit, error) {
-	ownerId, err := s.Unit.UnitOwnerId(unitId)
-	if err != nil {
-		return m.StorageUnit{}, err
-	}
-	if ownerId != userId {
-		return m.StorageUnit{}, ErrOwnershipViolation
-	}
-
-	return s.Unit.UnitById(unitId)
-}
-
 func (s *UnitService) CreateUnit(user m.UserIdentity, groupId int, unit m.StorageUnit) (int, error) {
+	//Check if user has reached limit of units for his partnership tier.
+	if err := s.checkUserLimit(user.Id); err != nil {
+		return 0, err
+	}
+	//Check if user is manager of this group.
 	if !s.Group.ManagerOwnsGroup(user.Id, groupId) && user.Role != m.AdminRole {
 		s.LogHistory(user.Id, groupId, StatusForbidden, UnitCreateAction)
 		return 0, ErrOwnershipViolation
@@ -68,6 +71,21 @@ func (s *UnitService) CreateUnit(user m.UserIdentity, groupId int, unit m.Storag
 	unit.IsOccupied = false
 
 	return s.Unit.CreateUnit(unit)
+}
+func (s *UnitService) checkUserLimit(userId int) error {
+	part, err := s.Partnership.PartByUserId(userId)
+	if err != nil {
+		return err
+	}
+	unitsCount, err := s.Unit.ManagerUnitsCount(userId)
+	if err != nil {
+		return err
+	}
+	if unitsCount >= UnitsPlanLimits[part.Tier] {
+		return ErrUnitsLimitReached
+	}
+
+	return nil
 }
 
 func (s *UnitService) UpdateUnit(user m.UserIdentity, unitId int, input m.UnitInput) error {
@@ -115,7 +133,7 @@ func (s *UnitService) UnitDetails(user m.UserIdentity, unitId int) (m.UnitDetail
 		return m.UnitDetails{}, ErrOwnershipViolation
 	}
 
-	unit, err := s.UnitById(user.Id, unitId)
+	unit, err := s.Unit.UnitById(unitId)
 	if err != nil {
 		return m.UnitDetails{}, err
 	}

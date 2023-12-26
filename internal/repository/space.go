@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,17 @@ type SpaceSQLite struct {
 
 func NewSpaceSQLite(db *bun.DB) *SpaceSQLite {
 	return &SpaceSQLite{db: db}
+}
+
+func (r *SpaceSQLite) ManagerSpacesCount(userId int) (int, error) {
+	var count int
+
+	count, err := r.db.NewSelect().
+		Table(userSpacesTable).
+		Where("user_id = ?", userId).
+		Count(context.Background())
+
+	return count, err
 }
 
 func (r *SpaceSQLite) ManagerOwnsSpace(userId, spaceId int) bool {
@@ -54,11 +66,19 @@ func (r *SpaceSQLite) AllSpaces(filter model.SpaceFilter) ([]model.Space, error)
 		filterValues = append([]string{""}, filterValues...)
 	}
 	filterQuery := strings.Join(filterValues, " AND ")
+	// WHERE 1=1 is a hack to avoid checking if filterQuery is empty
 	query := fmt.Sprintf("SELECT * FROM %s WHERE 1=1%s", spaceTable, filterQuery)
 	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
+	spaces, err = spacesFromRows(rows)
+
+	return spaces, err
+}
+
+func spacesFromRows(rows *sql.Rows) ([]model.Space, error) {
+	var spaces []model.Space
 	defer rows.Close()
 
 	for rows.Next() {

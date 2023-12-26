@@ -8,11 +8,20 @@ import (
 )
 
 var (
-	ErrOwnershipViolation = errors.New("access forbidden or obj does not exist")
+	//ERROR: user tries to access forbidden object.
+	ErrOwnershipViolation = errors.New("access forbidden or object does not exist")
 	//ERROR: user already banned.
 	ErrUserAlreadyBanned = errors.New("user already banned")
 	//ERROR: cannot delete user.
 	ErrCannotDeleteUser = errors.New("cannot delete user")
+	//ERROR: user tries to create new partnership, but he already has one.
+	ErrPartnershipViolation = errors.New("user already has partnership")
+	//ERROR: user tries to update partnership tier to the same or lower.
+	ErrTierViolation = errors.New("cannot update partnership tier to the same or lower")
+	//ERROR: user has reached limit of spaces for his partnership tier.
+	ErrSpacesLimitReached = errors.New("cannot create more spaces, try to upgrade your partnership tier")
+	//ERROR: user has reached limit of units for his partnership tier.
+	ErrUnitsLimitReached = errors.New("cannot create more units, try to upgrade your partnership tier")
 )
 
 type Admin interface {
@@ -29,10 +38,10 @@ type Authorization interface {
 	EditUser(userId int, input m.UpdateUserInput) error
 }
 
-type Subscription interface {
-	SubByUserId(id int) (m.Subscription, error)
-	CreateSub(m.Subscription) error
-	UpdateSub(m.Subscription) error
+type Partnership interface {
+	PartByUserId(id int) (m.Partnership, error)
+	CreatePart(userId, tier int) error
+	UpdatePart(userId, tier int) error
 }
 
 type Space interface {
@@ -53,19 +62,18 @@ type Group interface {
 }
 type Unit interface {
 	GroupUnits(user m.UserIdentity, groupId int) ([]m.StorageUnit, error)
-	UnitById(userId, unitId int) (m.StorageUnit, error)
 	CreateUnit(user m.UserIdentity, groupId int, unit m.StorageUnit) (int, error)
 	UpdateUnit(user m.UserIdentity, unitId int, unit m.UnitInput) error
 	DeleteUnit(user m.UserIdentity, unitId int) error
 	ReservedUnits(userId int) ([]m.StorageUnit, error)
 	UnitDetails(user m.UserIdentity, unitId int) (m.UnitDetails, error)
-	ReserveUnit(userId, unitId int, reservInfo m.UnitInput) error
+	ReserveUnit(userId, unitId int, reserveInfo m.UnitInput) error
 }
 
 type Service struct {
 	Admin
 	Authorization
-	// Subscription
+	Partnership
 	Unit
 	Group
 	Space
@@ -75,9 +83,9 @@ func NewServices(repo *repository.Repository) *Service {
 	return &Service{
 		Admin:         NewAdminService(repo),
 		Authorization: NewAuthService(repo),
-		// Subscription:  NewSubService(repo),
-		Unit:  NewUnitService(repo),
-		Group: NewGroupService(repo),
-		Space: NewSpaceService(repo),
+		Partnership:   NewPartService(repo),
+		Unit:          NewUnitService(repo),
+		Group:         NewGroupService(repo),
+		Space:         NewSpaceService(repo),
 	}
 }

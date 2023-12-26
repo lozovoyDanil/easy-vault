@@ -71,25 +71,31 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			units := manager.Group("/units")
 			{
 				units.GET("/", h.groupUnits)
-				units.GET("/:unit_id", h.unitById)
 				units.POST("/", h.createUnit)
 				units.PUT("/:unit_id", h.updateUnit)
 				units.DELETE("/:unit_id", h.deleteUnit)
+			}
+
+			part := manager.Group("/partnership")
+			{
+				part.GET("/", h.managerPart)
+				part.POST("/:tier", h.createPart)
+				part.PUT("/", h.updatePart)
 			}
 		}
 
 		customer := api.Group("/customer")
 		customer.Use(h.customerAccess)
 		{
-			reserv := customer.Group("/curr-reservations")
+			reservation := customer.Group("/reservations")
 			{
-				reserv.GET("/", h.reservedUnits)
-				reserv.POST("/:unit_id/unlock", h.unlockUnit)
-				reserv.POST("/:unit_id/lock", h.lockUnit)
+				reservation.GET("/", h.reservedUnits)
+				reservation.POST("/:unit_id/unlock", h.unlockUnit)
+				reservation.POST("/:unit_id/lock", h.lockUnit)
 			}
 
 			customer.POST("/reserve-unit/:unit_id", h.reserveUnit)
-			customer.DELETE("/cancel-reserv/:unit_id", h.cancelReserv)
+			customer.DELETE("/cancel/:unit_id", h.cancelReservation)
 		}
 
 		admin := api.Group("/admin")
