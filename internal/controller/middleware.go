@@ -46,7 +46,7 @@ func (h *Handler) userIdentity(ctx *gin.Context) {
 func (h *Handler) adminAccess(ctx *gin.Context) {
 	role, err := getUserRole(ctx)
 	if errors.Is(err, ErrWrongRoleType) {
-		newErrorResponse(ctx, http.StatusInternalServerError, ErrWrongRoleType.Error())
+		newErrorResponse(ctx, http.StatusBadRequest, ErrWrongRoleType.Error())
 		return
 	}
 	if err != nil {
